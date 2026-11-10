@@ -29,5 +29,4 @@ Only `index.html` is included in the deployed Pages artifact. The repository may
 - GitHub account required for the repository owner, **not** for students.
 - Internet access is needed to visit the hosted site and to load the optional Poppins Google Font. The app uses fallback fonts if that service is unavailable.
 - Browser-local input and state are not centrally collected by this static hosting configuration.
-- Cambridge 9618 conformance is not certified; use the supplied regression examples and continue testing before high-stakes classroom use.
 - The Cambridge guide PDF is intentionally **not** included in the public repository. Obtain it from the official Cambridge International site or your separately retained project reference package.

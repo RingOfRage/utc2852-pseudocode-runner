@@ -1,0 +1,6 @@
+const fs=require('fs'),s=fs.readFileSync('/mnt/data/parser/src/pseudorun-prototype/index.html','utf8');
+const extract=(a,b)=>s.slice(s.indexOf(a),s.indexOf(b,s.indexOf(a)));
+const code=extract('function splitTopLevel(', 'class ExpressionParser')+extract('tokenizeExpression=function(source){const tokens=[]', 'ExpressionParser.prototype.parseAdd=')+extract('function parseExpressionSyntax9618(', 'function createValidatedState9618(');
+const fn=new Function(code+';return structuralPreflight9618')();
+const cases=[['nested','DECLARE A : INTEGER\nIF A > 1 THEN\n IF A < 4 THEN\n OUTPUT A\n ELSE\n OUTPUT 0\n ENDIF\nENDIF',null],['bad','IF TRUE THEN\nOUTPUT 1','SyntaxError'],['mismatch','FOR i <-- 1 TO 3\nOUTPUT i\nNEXT j','SyntaxError'],['matrix','FOR Row <-- 1 TO 3\nFOR Col <-- 1 TO 3\nOUTPUT Matrix[Row, Col], " "\nNEXT Col\nNEXT Row',null],['expression','OUTPUT 1 +','SyntaxError'],['function','FUNCTION Fact(N : INTEGER) RETURNS INTEGER\nFOR i <-- 1 TO N\nOUTPUT i\nNEXT i\nRETURN N\nENDFUNCTION',null]];
+for(const [name,src,expected] of cases){let got=null;try{fn(src)}catch(e){got=e.name;console.log(name,e.message)}console.log(name,got===expected?'PASS':'FAIL',got);if(got!==expected)process.exitCode=1}

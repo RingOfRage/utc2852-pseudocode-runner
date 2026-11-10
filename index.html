@@ -1,0 +1,1533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14263d">
+<title>UTC2852: Pseudocode Runner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --ink: #17233c;
+  --muted: #65718a;
+  --blue: #2563eb;
+  --blue-dark: #1d4ed8;
+  --blue-soft: #eff6ff;
+  --sky: #e9f3ff;
+  --line: #e5eaf2;
+  --green: #13a36f;
+  --orange: #d97706;
+  --purple: #7c3aed;
+  --surface: #ffffff;
+  --shadow: 0 24px 70px rgba(33, 74, 147, .11);
+  font-family: Arial, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--ink);
+  background: #fff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; background: #fff; }
+button, textarea, input { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+
+.site-shell { overflow: hidden; }
+.container { width: min(1120px, calc(100% - 48px)); margin: 0 auto; }
+
+.topbar { position: relative; z-index: 5; padding: 24px 0; }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.04em; color: #1f376b; }
+.brand-mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: linear-gradient(145deg, #5b9bff, #2563eb); box-shadow: 0 8px 18px rgba(37, 99, 235, .24); }
+.brand-mark svg { width: 20px; height: 20px; }
+.brand-name { font-size: 18px; }
+.brand-name span { color: #6f7e9c; font-weight: 600; }
+.nav-right { display: flex; align-items: center; gap: 26px; color: #60708d; font-size: 13px; font-weight: 700; }
+.nav-link { transition: color .2s ease; }
+.nav-link:hover { color: var(--blue); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 10px; padding: 12px 16px; font-size: 13px; font-weight: 800; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
+.btn:hover { transform: translateY(-2px); }
+.btn-primary { color: white; background: var(--blue); box-shadow: 0 10px 22px rgba(37, 99, 235, .19); }
+.btn-primary:hover { background: var(--blue-dark); box-shadow: 0 14px 28px rgba(37, 99, 235, .25); }
+.btn-ghost { color: #4169a8; background: #fff; border-color: #e3eaf5; }
+.btn-ghost:hover { border-color: #b9cef1; background: #f8fbff; }
+.btn-small { padding: 9px 13px; border-radius: 9px; font-size: 12px; }
+.btn-wide { min-width: 176px; }
+
+.hero { position: relative; padding: 72px 0 48px; background: radial-gradient(circle at 19% 7%, rgba(207, 229, 255, .75), transparent 28%), linear-gradient(180deg, #f5f9ff 0%, #ffffff 92%); }
+.hero::before { content: ''; position: absolute; width: 520px; height: 520px; border-radius: 50%; right: -250px; top: -260px; border: 1px solid rgba(75, 135, 234, .13); box-shadow: 0 0 0 32px rgba(75, 135, 234, .03), 0 0 0 64px rgba(75, 135, 234, .025); pointer-events: none; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, .95fr) minmax(460px, 1.05fr); align-items: center; gap: 76px; }
+.kicker { display: inline-flex; align-items: center; gap: 8px; color: #4679ce; font-size: 12px; font-weight: 800; letter-spacing: .02em; }
+.kicker::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #4a91fb; box-shadow: 0 0 0 5px rgba(74,145,251,.12); }
+.hero h1 { margin: 18px 0 20px; max-width: 540px; color: #1f3056; font-size: clamp(42px, 5vw, 67px); line-height: 1.05; letter-spacing: -.068em; }
+.hero h1 em { color: var(--blue); font-style: normal; }
+.hero-copy { max-width: 480px; color: #687691; font-size: 16px; line-height: 1.75; }
+.hero-cta { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.hero-note { display: flex; align-items: center; gap: 8px; margin-top: 22px; color: #8b97aa; font-size: 11px; }
+.hero-note svg { color: #5b9bf6; }
+
+.demo-wrap { position: relative; }
+.demo-glow { position: absolute; inset: 12% -10% -12%; z-index: 0; border-radius: 36px; background: rgba(104, 161, 244, .18); filter: blur(35px); }
+.demo-card { position: relative; z-index: 1; overflow: hidden; border: 1px solid rgba(197, 215, 239, .92); border-radius: 14px; background: #fff; box-shadow: var(--shadow); transform: rotate(1.2deg); }
+.demo-topline { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #edf1f7; color: #8090a7; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+.window-dots { display: flex; gap: 5px; }
+.window-dots i { width: 7px; height: 7px; display: block; border-radius: 50%; background: #d6dfec; }
+.window-dots i:first-child { background: #9abfff; }
+.demo-body { display: grid; grid-template-columns: 1.15fr .85fr; min-height: 280px; }
+.demo-panel { padding: 19px; }
+.demo-panel + .demo-panel { border-left: 1px solid #edf1f7; background: #fbfdff; }
+.panel-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; color: #94a0b2; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .11em; }
+.panel-label strong { color: #6b7b94; font-size: 9px; }
+.mini-code, .mini-output { margin: 0; color: #435577; font-family: monospace, ui-monospace, monospace; font-size: 11px; line-height: 1.85; white-space: pre-wrap; }
+.mini-code .kw { color: #2563eb; }
+.mini-code .var { color: #7c3aed; }
+.mini-code .str { color: #0d9367; }
+.mini-output { color: #4a628e; }
+.mini-output::before { content: '>'; display: inline-block; margin-right: 8px; color: #54a4f8; font-weight: 800; }
+.demo-status { display: inline-flex; align-items: center; gap: 6px; margin-top: 26px; padding: 6px 9px; border-radius: 7px; color: #258764; background: #e9faf3; font-size: 9px; font-weight: 800; }
+.demo-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #22b77d; }
+
+.editor-section { position: relative; padding: 92px 0 108px; background: #fff; }
+.section-intro { max-width: 650px; margin: 0 auto 36px; text-align: center; }
+.eyebrow { margin: 0 0 13px; color: #4383e9; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.section-intro h2 { margin: 0; color: #1f3056; font-size: clamp(30px, 4vw, 42px); letter-spacing: -.055em; line-height: 1.13; }
+.section-intro p { margin: 16px auto 0; color: #718099; font-size: 14px; line-height: 1.75; }
+.editor-shell { overflow: hidden; border: 1px solid #dce5f1; border-radius: 16px; background: #fff; box-shadow: 0 25px 70px rgba(31, 69, 129, .12); }
+.editor-shell.fullscreen, .editor-shell:fullscreen { position: fixed; inset: 16px; z-index: 30; display: flex; flex-direction: column; width: auto; height: calc(100vh - 32px); min-height: 0; border-radius: 14px; box-shadow: 0 30px 100px rgba(24, 56, 112, .25); }
+.editor-shell.fullscreen .editor-grid, .editor-shell:fullscreen .editor-grid { flex: 1; min-height: 0; }
+.editor-shell.fullscreen .code-side, .editor-shell.fullscreen .output-side, .editor-shell:fullscreen .code-side, .editor-shell:fullscreen .output-side { display: flex; flex-direction: column; min-height: 0; }
+.editor-shell.fullscreen .code-body, .editor-shell.fullscreen .output-body, .editor-shell:fullscreen .code-body, .editor-shell:fullscreen .output-body { flex: 1; height: auto; min-height: 0; }
+.editor-shell.fullscreen .editor-footer, .editor-shell:fullscreen .editor-footer { flex: 0 0 auto; }
+.editor-fullscreen { overflow: hidden; }
+.editor-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 13px 16px; border-bottom: 1px solid #e7edf5; background: #fbfdff; }
+.toolbar-left, .toolbar-actions { display: flex; align-items: center; gap: 8px; }
+.fullscreen-btn { margin-left: 4px; }
+.file-icon { width: 21px; height: 24px; display: grid; place-items: center; color: #5083cf; background: #edf5ff; border-radius: 5px; }
+.file-name { color: #51627e; font-size: 12px; font-weight: 800; }
+.readonly-badge { padding: 5px 7px; border: 1px solid #e2eaf4; border-radius: 6px; color: #8a98ac; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.editor-grid { display: grid; grid-template-columns: minmax(0, 1.18fr) minmax(290px, .82fr); min-height: 430px; }
+.code-side { min-width: 0; border-right: 1px solid #e8edf4; background: #fbfcfe; }
+.code-head, .output-head { display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 19px; border-bottom: 1px solid #e8edf4; color: #7888a1; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.code-head span:last-child { color: #a1afc1; font-size: 9px; letter-spacing: .04em; text-transform: none; }
+.code-body { display: grid; grid-template-columns: 48px minmax(0, 1fr); height: 385px; overflow: hidden; }
+.line-numbers { overflow: hidden; padding: 18px 12px 18px 0; color: #b2bdcc; background: #f7f9fc; font: 12px/1.9 monospace, ui-monospace, monospace; text-align: right; user-select: none; }
+.line-numbers .active { color: inherit; font-weight: inherit; }
+.editor-canvas { position: relative; overflow: hidden; background: #fff; }
+.highlight-layer, .code-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 18px 19px; border: 0; outline: 0; font: 12px/1.9 monospace, ui-monospace, monospace; tab-size: 2; white-space: pre; }
+.highlight-layer { overflow: auto; pointer-events: none; color: #455775; scrollbar-width: none; }
+.highlight-layer::-webkit-scrollbar { display: none; }
+.code-input { z-index: 2; overflow: auto; resize: none; color: transparent; background: transparent; caret-color: #2563eb; -webkit-text-fill-color: transparent; }
+.code-input::selection { background: rgba(85, 145, 238, .2); }
+.tok-keyword { color: #2563eb; font-weight: 500; }
+.tok-variable { color: #7c3aed; }
+.tok-number { color: #c26a16; }
+.tok-string { color: #0a9366; }
+.tok-operator { color: #9b4bb3; }
+.tok-comment { color: #9aa7b7; font-style: italic; }
+.output-side { min-width: 0; background: #fff; }
+.output-head { background: #fbfdff; }
+.output-head .live-dot { width: 6px; height: 6px; margin-right: 6px; display: inline-block; border-radius: 50%; background: #27b77d; box-shadow: 0 0 0 4px rgba(39,183,125,.1); }
+.output-body { height: 385px; overflow: auto; padding: 21px; }
+.output-terminal { min-height: 124px; padding: 15px; border: 1px solid #e5edf6; border-radius: 9px; background: #f9fbfe; color: #46618d; font: 12px/1.9 monospace, ui-monospace, monospace; white-space: pre-wrap; }
+.output-placeholder { color: #9ba8b9; }
+.output-line { display: block; }
+.output-line::before { content: '›'; margin-right: 9px; color: #6caef4; }
+.runtime-error { color: #c94d5e; }
+.runtime-error::before { content: '!'; color: #e46b78; }
+.variables { margin-top: 23px; }
+.variables-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; color: #8b99ad; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.variables-title span { color: #b0bac8; font-size: 9px; letter-spacing: 0; text-transform: none; }
+.variable-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.var-chip { padding: 7px 9px; border: 1px solid #e4eaf3; border-radius: 7px; color: #596b88; background: #fbfdff; font: 10px monospace, ui-monospace, monospace; }
+.var-chip strong { color: #7c3aed; font-weight: 500; }
+.editor-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; border-top: 1px solid #e8edf4; background: #fbfdff; }
+.status-text { display: inline-flex; align-items: center; gap: 7px; color: #74829a; font-size: 10px; font-weight: 700; }
+.status-text::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #26b87d; }
+.status-text.error { color: #c94d5e; }
+.status-text.error::before { background: #e46b78; }
+
+.features { padding: 96px 0 104px; background: #f7faff; }
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 42px; }
+.feature-card { position: relative; min-height: 235px; padding: 27px; border: 1px solid #e1eaf5; border-radius: 14px; background: #fff; box-shadow: 0 9px 22px rgba(50, 90, 155, .035); }
+.feature-card:nth-child(2) { transform: translateY(20px); }
+.feature-icon { width: 42px; height: 42px; display: grid; place-items: center; margin-bottom: 26px; border-radius: 11px; }
+.feature-card:nth-child(1) .feature-icon { color: #2e75dd; background: #eaf3ff; }
+.feature-card:nth-child(2) .feature-icon { color: #8655da; background: #f1eaff; }
+.feature-card:nth-child(3) .feature-icon { color: #10946b; background: #e6faf2; }
+.feature-card h3 { margin: 0 0 10px; color: #2a3b5e; font-size: 15px; letter-spacing: -.02em; }
+.feature-card p { margin: 0; color: #77859b; font-size: 12px; line-height: 1.75; }
+.feature-index { position: absolute; right: 25px; top: 29px; color: #d0dbea; font: 11px monospace, ui-monospace, monospace; }
+
+.support { padding: 85px 0 92px; text-align: center; }
+.support h2 { margin: 0; color: #20345d; font-size: clamp(27px, 4vw, 40px); letter-spacing: -.06em; }
+.support p { max-width: 500px; margin: 14px auto 24px; color: #738199; font-size: 14px; line-height: 1.7; }
+.support-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 11px; }
+.support-link { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #e3eaf3; border-radius: 9px; color: #597091; font-size: 12px; font-weight: 800; }
+.support-link:hover { border-color: #b8d0f4; color: var(--blue); }
+.footer { padding: 23px 0; border-top: 1px solid #edf1f6; }
+.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 15px; color: #98a4b5; font-size: 10px; }
+.footer-brand { color: #5c6e8d; font-weight: 800; }
+
+.modal-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(26, 46, 80, .35); backdrop-filter: blur(5px); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+.modal-backdrop.open { opacity: 1; pointer-events: auto; }
+.modal { width: min(410px, 100%); padding: 28px; border: 1px solid #dfE8f4; border-radius: 17px; background: #fff; box-shadow: 0 24px 80px rgba(24, 57, 112, .22); transform: translateY(12px) scale(.98); transition: transform .2s ease; }
+.modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+.modal-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.modal h3 { margin: 0; color: #20345d; font-size: 22px; letter-spacing: -.04em; }
+.modal p { margin: 9px 0 21px; color: #77859b; font-size: 12px; line-height: 1.65; }
+.close-btn { width: 29px; height: 29px; display: grid; place-items: center; border: 0; border-radius: 7px; color: #8c99ad; background: #f4f7fb; }
+.form-label { display: block; margin: 0 0 7px; color: #526684; font-size: 11px; font-weight: 800; }
+.form-input { width: 100%; padding: 12px 13px; border: 1px solid #dfe7f1; border-radius: 8px; outline: 0; color: #324766; font-size: 13px; }
+.form-input:focus { border-color: #7eaff5; box-shadow: 0 0 0 3px rgba(76, 143, 241, .13); }
+.modal .btn { width: 100%; margin-top: 14px; }
+.modal-note { margin: 14px 0 0; color: #a0a9b8; text-align: center; font-size: 10px; }
+.success-message { display: none; padding: 18px 15px; border-radius: 10px; color: #287b5c; background: #eafaf2; font-size: 12px; line-height: 1.6; }
+.success-message.visible { display: block; }
+
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+  .hero-copy { max-width: 600px; }
+  .demo-card { max-width: 650px; margin: 0 auto; transform: none; }
+}
+@media (max-width: 700px) {
+  .container { width: min(100% - 32px, 560px); }
+  .topbar { padding: 17px 0; }
+  .nav-right { gap: 12px; }
+  .nav-link { display: none; }
+  .hero { padding: 60px 0 34px; }
+  .hero h1 { font-size: clamp(38px, 12vw, 55px); }
+  .hero-copy { font-size: 14px; }
+  .hero-cta .btn { width: 100%; }
+  .demo-body { grid-template-columns: 1fr; }
+  .demo-panel + .demo-panel { border-top: 1px solid #edf1f7; border-left: 0; }
+  .editor-section { padding: 72px 0 78px; }
+  .editor-toolbar { align-items: flex-start; flex-direction: column; }
+  .toolbar-actions { width: 100%; }
+  .toolbar-actions .btn { flex: 1; }
+  .fullscreen-label { display: none; }
+  .fullscreen-btn { flex: 0 0 42px !important; }
+  .editor-shell.fullscreen, .editor-shell:fullscreen { inset: 8px; height: calc(100vh - 16px); }
+  .editor-grid { grid-template-columns: 1fr; }
+  .code-side { border-right: 0; border-bottom: 1px solid #e8edf4; }
+  .output-side { min-height: 330px; }
+  .feature-grid { grid-template-columns: 1fr; gap: 14px; }
+  .feature-card:nth-child(2) { transform: none; }
+  .features { padding: 73px 0 83px; }
+  .support { padding: 70px 0 76px; }
+  .footer-inner { align-items: flex-start; flex-direction: column; }
+}
+
+/* Prototype workspace: no promotional sections */
+body { background: #f6f8fc; }
+.editor-section { min-height: 100vh; padding: 24px 0 32px; background: #f6f8fc; }
+.editor-section > .container { width: min(1500px, calc(100% - 40px)); }
+.prototype-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; color: #20345d; font-size: 14px; }
+.prototype-heading strong { font-size: 21px; letter-spacing: -.04em; }
+.prototype-heading span { color: #74829c; font-size: 12px; }
+.code-body, .output-body { height: min(70vh, 720px); min-height: 420px; }
+@media (max-width: 700px) { .editor-section { padding: 14px 0; } .editor-section > .container { width: calc(100% - 20px); } .prototype-heading { align-items: flex-start; flex-direction: column; gap: 3px; } .code-body, .output-body { min-height: 300px; height: 350px; } }
+
+
+/* Program input is part of the terminal stream, never a modal. */
+.output-side { display:flex; flex-direction:column; min-height:0; }
+.output-side > .output-body { flex:1 1 auto; min-height:160px; height:auto; overflow:auto; }
+.problems-panel { flex:0 0 165px; min-height:115px; border-top:5px solid #e5e7eb; background:#fff; display:flex; flex-direction:column; }
+.problems-head { padding:9px 14px; border-bottom:1px solid #e5e7eb; font-size:11px; font-weight:800; letter-spacing:.06em; color:#526684; display:flex; justify-content:space-between; }
+.problems-content { flex:1; overflow:auto; margin:0; padding:12px 14px; white-space:pre-wrap; overflow-wrap:anywhere; color:#15803d; font:12px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.problems-content.has-error { color:#b91c1c; }
+.program-status { font-size:11px; font-weight:800; letter-spacing:.05em; padding:4px 8px; border-radius:4px; }
+.status-ready { color:#64748b; background:#f1f5f9; }
+.status-running { color:#92400e; background:#fef3c7; }
+.status-complete { color:#047857; background:#ecfdf5; }
+.status-error { color:#b91c1c; background:#fef2f2; }
+
+.output-terminal { background: #fff; color: #17233c; font-size: 13px; }
+/* Give the output console the available height; keep variable inspection compact. */
+.output-side > .output-body { display:flex; flex-direction:column; flex:1 1 0; min-height:180px; padding:14px 16px; overflow:hidden; }
+.output-side .output-terminal { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:auto; }
+.output-side > .variables { flex:0 0 auto; margin:0; padding:7px 16px 8px; border-top:1px solid #e8edf4; background:#fbfdff; }
+.output-side > .variables .variables-title { margin:0 0 5px; font-size:9px; }
+.output-side > .variables .variable-list { gap:5px; max-height:62px; overflow-y:auto; }
+.output-side > .variables .var-chip { padding:3px 7px; font-size:10px; }
+.output-side > .problems-panel { flex-basis:130px; min-height:95px; }
+@media (max-width:700px) { .output-side > .output-body { min-height:240px; } .output-side > .variables .variable-list { max-height:52px; } }
+
+.output-line::before { content: none; }
+.inline-input-form { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 12px; padding: 10px 12px; background: #f8fafc; border: 1px solid #dbe5f1; border-radius: 9px; }
+.inline-input-form label { font-weight: 600; color: #17233c; font-size: 12px; flex: 0 1 auto; }
+.inline-input-form input { flex: 0 1 180px; width: 180px; max-width: 100%; min-width: 90px; box-sizing: border-box; border: 1px solid #9ca3af; border-radius: 5px; padding: 8px 10px; background: #fff; color: #111827; font: inherit; white-space: nowrap; overflow-x: auto; text-overflow: clip; }
+.inline-input-form input:focus { outline: 2px solid #2563eb; outline-offset: 1px; }
+.inline-input-form button { padding: 10px 18px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; }
+.input-history-entry { display: flex; flex-wrap: wrap; align-items: baseline; gap: 9px; padding: 6px 10px; margin: 5px 0; background: #f3f7fd; border-left: 3px solid #2563eb; border-radius: 3px; font-size: 12px; }
+.input-history-entry strong { color: #1e40af; font-weight: 700; }
+.input-history-entry .input-value { color: #111827; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media(max-width:650px){.inline-input-form{gap:8px}.inline-input-form label{flex-basis:100%}.inline-input-form button{width:auto}}
+.inline-input-error { flex-basis: 100%; color: #b91c1c; }
+.inline-input-error[hidden] { display: none; }
+
+.app-title {font-size:17px;font-weight:800;color:#19335f;padding:13px 20px 4px;background:#f9fbff;}
+.program-file-name {width:90px;min-width:45px;max-width:180px;border:1px solid #dce5f2;border-radius:6px;background:white;padding:5px 7px;color:#243d65;font:700 12px inherit;}
+.file-ext {font-size:12px;color:#71829c;margin-left:-7px;margin-right:8px;}
+
+/* UTC2852 output / variables / expanded errors proportions */
+/* The three content panels share the space below the OUTPUT heading. */
+.output-side {
+  display: grid;
+  grid-template-rows: 44px minmax(0, 5.5fr) minmax(0, 2.5fr) minmax(0, 2fr);
+  height: calc(min(70vh, 720px) + 44px);
+  min-height: 464px;
+  overflow: hidden;
+}
+.output-side > .output-body {
+  min-height: 0; height: auto; flex: none;
+  padding: 14px 16px;
+}
+.output-side > .variables {
+  min-height: 0; height: auto; flex: none;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  padding: 10px 16px;
+}
+.output-side > .variables .variable-list {
+  max-height: none; min-height: 0; flex: 1 1 auto;
+  align-content: flex-start; overflow-y: auto;
+}
+.output-side > .problems-panel {
+  min-height: 0; height: auto; flex: none;
+  overflow: hidden;
+  border-top-width: 4px;
+}
+.output-side .problems-head { flex: 0 0 auto; padding: 5px 12px; }
+.output-side .problems-content { min-height: 0; padding: 5px 12px; }
+.editor-shell.fullscreen .output-side,
+.editor-shell:fullscreen .output-side { height: 100%; min-height: 0; }
+@media (max-width:700px) {
+  .output-side { height: 394px; min-height: 394px; }
+  .output-side > .output-body { min-height: 0; }
+  .output-side > .variables .variable-list { max-height: none; }
+}
+
+/* UTC2852 visual refresh: restrained slate / teal palette and Poppins UI typography. */
+:root {
+  --ink: #18283d;
+  --muted: #66778b;
+  --blue: #167d83;
+  --blue-dark: #10646a;
+  --blue-soft: #e8f5f3;
+  --sky: #edf7f5;
+  --line: #dce5e9;
+  --green: #16815f;
+  --orange: #b97925;
+  --purple: #5c628e;
+  --surface: #ffffff;
+  --shadow: 0 14px 44px rgba(18, 42, 60, .08);
+  font-family: 'Poppins', Arial, sans-serif;
+}
+html, body, button, input, textarea, select { font-family: 'Poppins', Arial, sans-serif; }
+body, .editor-section { background: #edf2f5; }
+.editor-section { padding: 20px 0 28px; }
+.editor-shell { border: 1px solid #d5e0e5; border-radius: 14px; box-shadow: 0 12px 38px rgba(23, 48, 65, .07); }
+.app-title { font-family: 'Poppins', Arial, sans-serif; color: #172c41; background: #ffffff; font-size: 18px; letter-spacing: -.025em; padding: 16px 20px 5px; }
+.editor-toolbar, .editor-footer { background: #fff; border-color: #e1e8eb; }
+.editor-toolbar { padding: 11px 18px 14px; }
+.btn { font-family: 'Poppins', Arial, sans-serif; font-weight: 600; border-radius: 8px; box-shadow: none; transition: background .15s ease, border-color .15s ease; }
+.btn:hover { transform: none; }
+.btn-primary { background: #167d83; box-shadow: none; }
+.btn-primary:hover { background: #10646a; box-shadow: none; }
+.btn-ghost { color: #31465b; background: #fff; border-color: #dce5e9; }
+.btn-ghost:hover { background: #f3f8f8; border-color: #a5c8c9; }
+.program-file-name { font-family: 'Poppins', Arial, sans-serif; font-weight: 500; color: #243a4f; border-color: #dce5e9; }
+.file-icon { color: #167d83; background: #e9f5f3; }
+.code-head, .output-head { font-family: 'Poppins', Arial, sans-serif; background: #f7f9fa; color: #54687a; border-color: #e1e8eb; font-weight: 700; letter-spacing: .055em; }
+.code-head span:last-child { color: #748798; }
+.code-side { background: #fff; border-color: #e1e8eb; }
+.line-numbers { background: #f5f8fa; color: #91a1af; }
+.editor-canvas { background: #fff; }
+.code-input { caret-color: #167d83; }
+.tok-keyword { color: #2462a4; }
+.tok-variable { color: #684ba2; }
+.tok-string { color: #087a5b; }
+.tok-number { color: #a76026; }
+.tok-operator { color: #865b96; }
+.output-side { background: #fff; }
+.output-body { background: #fff; }
+.output-terminal { background: #fbfcfd; border: 1px solid #dfe7ea; color: #26384a; border-radius: 9px; }
+.output-side > .variables { background: #f8fafb; border-color: #e0e8eb; }
+.variables-title, .problems-head { font-family: 'Poppins', Arial, sans-serif; color: #52677a; letter-spacing: .055em; }
+.var-chip { background: #fff; border-color: #dce5e9; color: #3e5267; }
+.var-chip strong { color: #355d89; }
+.output-side > .problems-panel { border-color: #e0e7ea; background: #fff; }
+.problems-head { border-color: #e1e8eb; }
+.status-ready { color: #52677a; background: #edf2f5; }
+.status-running { color: #89580d; background: #fff3d9; }
+.status-complete { color: #146a50; background: #e5f5ed; }
+.status-error { color: #b33d43; background: #fff0f0; }
+.output-head .live-dot { background: #16815f; box-shadow: 0 0 0 3px #e2f4ea; }
+.inline-input-form { background: #f7fafb; border-color: #dce5e9; }
+.inline-input-form label { font-family: 'Poppins', Arial, sans-serif; color: #26394d; }
+.inline-input-form input { font-family: 'Poppins', Arial, sans-serif; border-color: #bdcdd5; }
+.inline-input-form input:focus { outline-color: #167d83; }
+.inline-input-form button { font-family: 'Poppins', Arial, sans-serif; background: #167d83; }
+.input-history-entry { background: #eef7f6; border-left-color: #167d83; }
+.input-history-entry strong { color: #155e65; }
+.status-text::before { background: #16815f; }
+@media (max-width: 700px) { .app-title { font-size: 16px; } }
+
+
+/* Credits: unobtrusive footer link and accessible modal */
+.credits-footer { padding: 10px 20px 14px; color: #536679; font: 12px 'Poppins', Arial, sans-serif; }
+.credits-link { border: 0; padding: 0; background: transparent; color: #176c77; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font: inherit; font-weight: 600; }
+.credits-link:hover { color: #0e4b57; }
+.credits-dialog { width: min(560px, calc(100vw - 32px)); max-height: min(80vh, 680px); overflow-y: auto; border: 1px solid #d8e2e7; border-radius: 14px; padding: 26px 30px; background: #fff; color: #243746; box-shadow: 0 20px 60px #142b3b38; font: 14px/1.65 'Poppins', Arial, sans-serif; }
+.credits-dialog::backdrop { background: #10283899; }
+.credits-dialog h2 { font-size: 20px; margin: 0 0 10px; }
+.credits-dialog ul { padding-left: 22px; margin: 14px 0 22px; }
+.credits-dialog li { margin-bottom: 12px; }
+.credits-dialog a { color: #126b79; overflow-wrap: anywhere; }
+.credits-dialog .credits-copyright { border-top: 1px solid #e1e8eb; padding-top: 14px; font-size: 12px; color: #5b6d7b; }
+.credits-close { float: right; background: #f1f5f6; border: 1px solid #d7e0e5; border-radius: 7px; padding: 4px 11px; font: inherit; cursor: pointer; }
+
+/* Reset confirmation: deliberate destructive action, distinct from Close. */
+.reset-dialog { width: min(440px, calc(100vw - 32px)); border: 1px solid #d8e2e7; border-radius: 14px; padding: 26px; background: #fff; color: #243746; box-shadow: 0 20px 60px #142b3b38; font: 14px/1.6 'Poppins', Arial, sans-serif; }
+.reset-dialog::backdrop { background: #10283899; }
+.reset-dialog h2 { font-size: 20px; margin: 0 0 8px; }
+.reset-dialog p { margin: 0 0 18px; color: #536679; }
+.reset-dialog .reset-optout { display: flex; align-items: center; gap: 10px; margin: 0 0 22px; cursor: pointer; }
+.reset-dialog .reset-optout input { width: 17px; height: 17px; accent-color: #167d83; }
+.reset-dialog .reset-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.reset-dialog .reset-actions button { border-radius: 8px; padding: 10px 18px; font: 600 13px 'Poppins', Arial, sans-serif; cursor: pointer; }
+.reset-dialog .reset-cancel { border: 1px solid #d4dfe5; color: #243746; background: #fff; }
+.reset-dialog .reset-confirm { border: 1px solid #c62828; color: #fff; background: #c62828; }
+.reset-dialog .reset-confirm:hover { background: #a91d1d; }
+.reset-dialog button:focus-visible, .reset-dialog input:focus-visible { outline: 3px solid #83c9ca; outline-offset: 2px; }
+/* Keep the Credits line visible within the viewport, without page scrolling. */
+html, body { height: 100%; }
+.site-shell { min-height: 100dvh; display: flex; flex-direction: column; overflow: visible; }
+.site-shell > main { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.editor-section { flex: 1 1 auto; min-height: 0; padding: 10px 0 0; display: flex; flex-direction: column; }
+.editor-section > .container { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.editor-shell { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.editor-grid { flex: 1 1 auto; min-height: 0; }
+.code-side, .output-side { min-height: 0; display: flex; flex-direction: column; }
+.code-body { flex: 1 1 auto; height: auto; min-height: 0; }
+.credits-footer { flex: 0 0 auto; padding: 8px 20px 10px; line-height: 1.35; }
+/* Match the primary Run button's teal-green treatment. */
+.credits-dialog .credits-close { float: right; background: #167d83; color: #fff; border: 1px solid #167d83; border-radius: 8px; padding: 7px 15px; font: 600 13px 'Poppins', Arial, sans-serif; cursor: pointer; }
+.credits-dialog .credits-close:hover { background: #10646a; border-color: #10646a; }
+.credits-dialog .credits-close:focus-visible { outline: 3px solid #83c9ca; outline-offset: 2px; }
+@media (max-width: 700px) { .editor-section { padding-top: 6px; } .credits-footer { padding: 7px 12px 9px; font-size: 11px; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+
+const starterCode = `// Welcome to UTC2852 Pseudocode Runner!
+// Type in or import your pseudocode to begin!`;
+
+const icon = {
+  arrow: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  play: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.3v13.4a1 1 0 0 0 1.5.86l10.3-6.7a1 1 0 0 0 0-1.68L9.5 4.44A1 1 0 0 0 8 5.3Z"/></svg>',
+  reset: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/></svg>',
+  step: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 5 7 7-7 7"/><path d="M4 12h15"/></svg>',
+  fullscreen: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 0-2v-3"/></svg>',
+  close: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
+  lock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  file: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>',
+  book: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>',
+  bug: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7.5V6a3 3 0 0 1 6 0v1.5"/><rect x="6.5" y="7" width="11" height="12" rx="5"/><path d="M3 13h3M18 13h3M4.5 7.5l2.4 2M19.5 7.5l-2.4 2M4.5 18.5l2.4-2M19.5 18.5l-2.4-2"/></svg>',
+  cloud: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a6 6 0 1 1 5.8-7.5A4.5 4.5 0 1 1 17.5 19Z"/></svg>'
+};
+
+const app = document.querySelector('#app');
+app.innerHTML = `
+  <div class="site-shell">
+<main id="top">
+<section class="editor-section" id="editor">
+        <div class="container">
+<div class="editor-shell">
+            <div class="app-title">UTC2852: Pseudocode Runner</div>
+            <div class="editor-toolbar">
+              <div class="toolbar-left"><span class="file-icon">${icon.file}</span><input id="programFileName" class="program-file-name" value="index" aria-label="Program filename" title="Edit filename" /><span class="file-ext">.txt</span><button class="btn btn-ghost btn-small" id="saveTxtBtn" title="Download pseudocode as text">Save .txt</button><button class="btn btn-ghost btn-small" id="importTxtBtn" title="Import pseudocode text">Import .txt</button><input id="importTxtInput" type="file" accept=".txt,text/plain" hidden /></div>
+              <div class="toolbar-actions">
+                <button class="btn btn-ghost btn-small" id="resetBtn">${icon.reset} Reset</button>
+                <button class="btn btn-primary btn-small" id="runBtn">${icon.play} Run</button>
+                <button class="btn btn-ghost btn-small fullscreen-btn" id="fullscreenBtn" title="Open editor fullscreen">${icon.fullscreen}<span class="fullscreen-label">Fullscreen</span></button>
+              </div>
+            </div>
+            <div class="editor-grid">
+              <section class="code-side" aria-label="Pseudocode editor">
+                <div class="code-head"><span>editor.pseudo</span><span>Cambridge 9618</span></div>
+                <div class="code-body">
+                  <div class="line-numbers" id="lineNumbers" aria-hidden="true"></div>
+                  <div class="editor-canvas">
+                    <pre class="highlight-layer" id="highlightLayer" aria-hidden="true"></pre>
+                    <textarea class="code-input" id="codeInput" spellcheck="false" aria-label="Pseudocode input"></textarea>
+                  </div>
+                </div>
+              </section>
+              <section class="output-side" aria-label="Program output">
+                <div class="output-head"><span><span class="live-dot"></span>OUTPUT</span><span id="programStatus" class="program-status status-ready" role="status">READY</span></div>
+                <div class="output-body">
+                  <div class="output-terminal" id="outputTerminal"><span class="output-placeholder">Run your pseudocode to see the output here.</span></div>
+                </div>
+                <div class="variables" aria-label="Variable inspector">
+                  <div class="variables-title">VARIABLES <span id="debugHint">run to inspect</span></div>
+                  <div class="variable-list" id="variableList"><span class="var-chip">No values yet</span></div>
+                </div>
+                <section class="problems-panel" aria-label="Compilation and runtime errors">
+                  <div class="problems-head">ERRORS <span id="problemCount">0 errors</span></div>
+                  <pre id="problemsContent" class="problems-content" aria-live="polite">No problems</pre>
+                </section>
+              </section>
+            </div>
+            <div class="editor-footer"><span class="status-text" id="statusText">Ready</span><span class="file-name">Shift+Enter to run</span></div>
+          </div>
+        </div>
+      </section>
+
+
+    </main>
+    <footer class="credits-footer"><button type="button" id="creditsLink" class="credits-link" aria-haspopup="dialog">Credits</button> · Alfred Ong, Acacia College, 2026. All Rights Reserved</footer>
+</div>
+<dialog id="resetDialog" class="reset-dialog" aria-labelledby="resetTitle" aria-describedby="resetDescription">
+  <h2 id="resetTitle">Reset pseudocode runner?</h2>
+  <p id="resetDescription">This will clear your current code, output, variables, and errors, and restore the welcome text. Save your code first if you want to keep it.</p>
+  <label class="reset-optout"><input type="checkbox" id="resetNoPrompt" />Do not prompt me again</label>
+  <div class="reset-actions"><button type="button" id="resetCancel" class="reset-cancel">Close</button><button type="button" id="resetConfirm" class="reset-confirm">Confirm</button></div>
+</dialog>
+<dialog id="creditsDialog" class="credits-dialog" aria-labelledby="creditsTitle">
+  <button type="button" class="credits-close" id="creditsClose" aria-label="Close credits">Close</button>
+  <h2 id="creditsTitle">Credits and references</h2>
+  <p>The following resources informed the runner's pseudocode conventions, interface references, and development:</p>
+  <ul>
+    <li><strong>Cambridge International Education.</strong> <em>Cambridge International AS &amp; A Level Computer Science (9618): Pseudocode Guide for Teachers (2026).</em> Included in the project package under <code>reference/697401-2026-pseudocode-guide-for-teachers.pdf</code>. <a href="https://www.cambridgeinternational.org/" target="_blank" rel="noopener noreferrer">Cambridge International</a>.</li>
+    <li><strong>PseudoRun.</strong> Online pseudocode runner and debugger, consulted as a reference for interactive execution and output behavior. <a href="https://www.pseudorun.tech/" target="_blank" rel="noopener noreferrer">pseudorun.tech</a>.</li>
+    <li><strong>UTC2852 project test cases and examples.</strong> Student-style pseudocode examples, expected outputs, debugging cases, and interface requirements supplied during development.</li>
+  </ul>
+  <p class="credits-copyright">Alfred Ong, Acacia College, 2026. All Rights Reserved</p>
+</dialog>
+
+
+
+`;
+
+const creditsDialog = document.querySelector('#creditsDialog');
+const creditsLink = document.querySelector('#creditsLink');
+document.querySelector('#creditsClose').addEventListener('click', () => creditsDialog.close());
+creditsLink.addEventListener('click', () => creditsDialog.showModal());
+creditsDialog.addEventListener('click', event => { if (event.target === creditsDialog) creditsDialog.close(); });
+
+const codeInput = document.querySelector('#codeInput');
+const highlightLayer = document.querySelector('#highlightLayer');
+const lineNumbers = document.querySelector('#lineNumbers');
+const outputTerminal = document.querySelector('#outputTerminal');
+const programStatus = document.querySelector('#programStatus');
+const problemsContent = document.querySelector('#problemsContent');
+const problemCount = document.querySelector('#problemCount');
+const variableList = document.querySelector('#variableList');
+const statusText = document.querySelector('#statusText');
+const debugHint = document.querySelector('#debugHint');
+const editorShell = document.querySelector('.editor-shell');
+const fullscreenBtn = document.querySelector('#fullscreenBtn');
+let interpreterState = null;
+let activeSource = starterCode;
+
+codeInput.value = starterCode;
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character]));
+}
+
+function highlightCode(source) {
+  return source.split('\n').map((line) => {
+    if (/^\s*\/\//.test(line)) return `<span class="tok-comment">${escapeHtml(line)}</span>`;
+    const tokens = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:DECLARE|INTEGER|REAL|STRING|BOOLEAN|FOR|TO|STEP|NEXT|IF|THEN|ELSE|ENDIF|OUTPUT|INPUT|MOD|AND|OR|NOT|TRUE|FALSE)\b|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b|←|<>|<=|>=|=|\+|-|\*|\/)/g;
+    let result = '';
+    let cursor = 0;
+    let match;
+    while ((match = tokens.exec(line))) {
+      result += escapeHtml(line.slice(cursor, match.index));
+      const value = match[0];
+      let className = 'tok-variable';
+      if (/^(?:"|')/.test(value)) className = 'tok-string';
+      else if (/^\d/.test(value)) className = 'tok-number';
+      else if (/^(?:DECLARE|INTEGER|REAL|STRING|BOOLEAN|FOR|TO|STEP|NEXT|IF|THEN|ELSE|ENDIF|OUTPUT|INPUT|MOD|AND|OR|NOT|TRUE|FALSE)$/.test(value)) className = 'tok-keyword';
+      else if (/^(?:←|<>|<=|>=|=|\+|-|\*|\/)$/.test(value)) className = 'tok-operator';
+      result += `<span class="${className}">${escapeHtml(value)}</span>`;
+      cursor = match.index + value.length;
+    }
+    result += escapeHtml(line.slice(cursor));
+    return result || ' ';
+  }).join('\n');
+}
+
+function updateEditorView() {
+  activeSource = codeInput.value;
+  try {
+    highlightLayer.innerHTML = highlightCode(activeSource);
+  } catch (error) {
+    // A highlighting failure must never conceal the original program.
+    highlightLayer.textContent = activeSource;
+  }
+  const lines = activeSource.split('\n');
+  lineNumbers.innerHTML = lines.map((_, index) => `<div>${index + 1}</div>`).join('');
+  syncEditorScroll();
+}
+
+function syncEditorScroll() {
+  highlightLayer.scrollTop = codeInput.scrollTop;
+  highlightLayer.scrollLeft = codeInput.scrollLeft;
+  lineNumbers.scrollTop = codeInput.scrollTop;
+}
+
+function setStatus(message, isError = false) {
+  statusText.textContent = message;
+  statusText.classList.toggle('error', isError);
+}
+
+function splitTopLevel(source, delimiter = ',') {
+  const pieces = [];
+  let start = 0;
+  let depth = 0;
+  let bracketDepth = 0;
+  let quote = null;
+  for (let i = 0; i < source.length; i += 1) {
+    const char = source[i];
+    if (quote) {
+      if (char === quote && source[i - 1] !== '\\') quote = null;
+      continue;
+    }
+    if (char === '"' || char === "'") quote = char;
+    else if (char === '[') bracketDepth += 1;
+    else if (char === ']') bracketDepth -= 1;
+    else if (char === '(') depth += 1;
+    else if (char === ')') depth -= 1;
+    else if (char === delimiter && depth === 0 && bracketDepth === 0) {
+      pieces.push(source.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  pieces.push(source.slice(start).trim());
+  return pieces.filter(Boolean);
+}
+
+function tokenizeExpression(source) {
+  const tokens = [];
+  let index = 0;
+  while (index < source.length) {
+    if (/\s/.test(source[index])) { index += 1; continue; }
+    const rest = source.slice(index);
+    const two = rest.slice(0, 2);
+    if (['<>', '<=', '>='].includes(two)) { tokens.push({ type: 'op', value: two }); index += 2; continue; }
+    const char = source[index];
+    if ('(),+-*/%=<>'.includes(char)) { tokens.push({ type: 'op', value: char }); index += 1; continue; }
+    if (char === '"' || char === "'") {
+      let end = index + 1;
+      while (end < source.length && (source[end] !== char || source[end - 1] === '\\')) end += 1;
+      if (end >= source.length) throw new Error('Unclosed string literal');
+      tokens.push({ type: 'string', value: source.slice(index + 1, end).replace(/\\([\\"'])/g, '$1') });
+      index = end + 1;
+      continue;
+    }
+    const number = rest.match(/^\d+(?:\.\d+)?/);
+    if (number) { tokens.push({ type: 'number', value: Number(number[0]) }); index += number[0].length; continue; }
+    const word = rest.match(/^[A-Za-z_]\w*/);
+    if (word) { tokens.push({ type: 'word', value: word[0].toUpperCase(), raw: word[0] }); index += word[0].length; continue; }
+    throw new Error(`Unexpected character “${char}”`);
+  }
+  tokens.push({ type: 'eof', value: '' });
+  return tokens;
+}
+
+class ExpressionParser {
+  constructor(source, variables) { this.tokens = tokenizeExpression(source); this.index = 0; this.variables = variables; }
+  current() { return this.tokens[this.index]; }
+  eat(value) { if (this.current().value === value) { this.index += 1; return true; } return false; }
+  expect(value) { if (!this.eat(value)) throw new Error(`Expected ${value}`); }
+  parse() { const value = this.parseOr(); if (this.current().type !== 'eof') throw new Error(`Unexpected token “${this.current().raw || this.current().value}”`); return value; }
+  parseOr() { let value = this.parseAnd(); while (this.current().value === 'OR') { this.index += 1; const right = this.parseAnd(); value = Boolean(value) || Boolean(right); } return value; }
+  parseAnd() { let value = this.parseCompare(); while (this.current().value === 'AND') { this.index += 1; const right = this.parseCompare(); value = Boolean(value) && Boolean(right); } return value; }
+  parseCompare() { let value = this.parseAdd(); while (['=', '<>', '<', '>', '<=', '>='].includes(this.current().value)) { const op = this.current().value; this.index += 1; const right = this.parseAdd(); if (op === '=') value = value === right; else if (op === '<>') value = value !== right; else if (op === '<') value = value < right; else if (op === '>') value = value > right; else if (op === '<=') value = value <= right; else value = value >= right; } return value; }
+  parseAdd() { let value = this.parseMultiply(); while (['+', '-'].includes(this.current().value)) { const op = this.current().value; this.index += 1; const right = this.parseMultiply(); value = op === '+' ? (typeof value === 'string' || typeof right === 'string' ? String(value) + String(right) : value + right) : value - right; } return value; }
+  parseMultiply() { let value = this.parseUnary(); while (['*', '/', 'MOD', 'DIV'].includes(this.current().value)) { const op = this.current().value; this.index += 1; const right = this.parseUnary(); if (op === '*') value *= right; else if (op === '/') value /= right; else if (op === 'DIV') { if (right === 0) throw new Error('Division by zero'); value = Math.trunc(value / right); } else { if (right === 0) throw new Error('Division by zero'); value %= right; } } return value; }
+  parseUnary() { if (this.eat('NOT')) return !this.parseUnary(); if (this.eat('-')) return -this.parseUnary(); if (this.eat('+')) return +this.parseUnary(); return this.parsePrimary(); }
+  parsePrimary() {
+    const token = this.current();
+    if (token.type === 'number' || token.type === 'string') { this.index += 1; return token.value; }
+    if (token.type === 'word') {
+      this.index += 1;
+      if (token.value === 'TRUE') return true;
+      if (token.value === 'FALSE') return false;
+      if (this.eat('(')) { const args = []; if (!this.eat(')')) { do { args.push(this.parseOr()); } while (this.eat(',')); this.expect(')'); } return callBuiltin(token.value, args); }
+      if (Object.prototype.hasOwnProperty.call(this.variables, token.raw)) return this.variables[token.raw];
+      if (Object.prototype.hasOwnProperty.call(this.variables, token.value)) return this.variables[token.value];
+      throw new Error(`Unknown variable “${token.raw}”`);
+    }
+    if (this.eat('(')) { const value = this.parseOr(); this.expect(')'); return value; }
+    throw new Error(`Expected a value, got “${token.value || 'end of line'}”`);
+  }
+}
+
+function callBuiltin(name, a) {
+  const arity = { SUBSTRING:3, LENGTH:1, UCASE:1, LCASE:1, MID:3, LEFT:2, RIGHT:2, INT:1, ROUND:2, RAND:1, NUM_TO_STR:1, STR_TO_NUM:1, ASC:1, CHR:1 };
+  if (!(name in arity)) throw new Error(`Unsupported function ${name}`);
+  if (a.length !== arity[name]) throw new Error(`${name} requires ${arity[name]} argument(s)`);
+  switch(name) {
+    case 'LENGTH': return String(a[0]).length;
+    case 'UCASE': return String(a[0]).toUpperCase();
+    case 'LCASE': return String(a[0]).toLowerCase();
+    case 'MID': case 'SUBSTRING': return String(a[0]).slice(Number(a[1])-1, Number(a[1])-1+Number(a[2]));
+    case 'LEFT': return String(a[0]).slice(0, Number(a[1]));
+    case 'RIGHT': return String(a[0]).slice(-Number(a[1]));
+    case 'INT': return Math.floor(Number(a[0]));
+    case 'ROUND': return Number(Number(a[0]).toFixed(Number(a[1])));
+    case 'RAND': return Math.random()*Number(a[0]);
+    case 'NUM_TO_STR': return String(a[0]);
+    case 'STR_TO_NUM': { const n = Number(a[0]); if (!Number.isFinite(n)) throw new Error('Invalid numeric string'); return n; }
+    case 'ASC': return String(a[0]).charCodeAt(0);
+    case 'CHR': return String.fromCharCode(Number(a[0]));
+  }
+}
+function evaluateExpression(source, variables) { return new ExpressionParser(source, variables).parse(); }
+function displayValue(value) { if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE'; if (typeof value === 'number' && Number.isInteger(value)) return String(value); return String(value); }
+
+function createState(source) {
+  const lines = source.split(/\r?\n/);
+  const endifFor = {}, elseFor = {}, nextFor = {}, whileFor = {}, endwhileFor = {}, repeatFor = {}, untilFor = {};
+  const stack = [];
+  for (let i = 0; i < lines.length; i++) {
+    const upper = lines[i].trim().toUpperCase();
+    let kind = null;
+    if (/^IF\s+/.test(upper) && /\sTHEN$/.test(upper)) kind = 'IF';
+    else if (/^FOR\s+/.test(upper)) kind = 'FOR';
+    else if (/^WHILE\s+/.test(upper)) kind = 'WHILE';
+    else if (upper === 'REPEAT') kind = 'REPEAT';
+    if (kind) { stack.push({kind, line:i, elseLine:null}); continue; }
+    if (upper === 'ELSE') {
+      const top = stack[stack.length-1];
+      if (!top || top.kind !== 'IF' || top.elseLine !== null) throw new Error(`Invalid ELSE on line ${i+1}`);
+      top.elseLine = i; continue;
+    }
+    const closing = upper === 'ENDIF' ? 'IF' : /^NEXT(?:\s|$)/.test(upper) ? 'FOR' : upper === 'ENDWHILE' ? 'WHILE' : /^UNTIL\s+/.test(upper) ? 'REPEAT' : null;
+    if (closing) {
+      const top = stack.pop();
+      if (!top || top.kind !== closing) throw new Error(`Unmatched ${upper} on line ${i+1}`);
+      if (closing === 'IF') { endifFor[top.line] = i; if (top.elseLine !== null) { elseFor[top.line] = top.elseLine; endifFor[top.elseLine] = i; } }
+      if (closing === 'FOR') nextFor[top.line] = i;
+      if (closing === 'WHILE') { whileFor[top.line] = i; endwhileFor[i] = top.line; }
+      if (closing === 'REPEAT') { repeatFor[top.line] = i; untilFor[i] = top.line; }
+    }
+  }
+  if (stack.length) throw new Error(`Unclosed ${stack[0].kind} on line ${stack[0].line+1}`);
+  return { source, lines, pc:0, activeLine:0, vars:{}, types:{}, constants:new Set(), output:[], loops:[], endifFor, elseFor, nextFor, whileFor, endwhileFor, repeatFor, untilFor, done:false, error:null, pendingInput:null, steps:0 };
+}
+function validateType(type, value, name) {
+  const valid = type === 'INTEGER' ? Number.isInteger(value) : type === 'REAL' ? typeof value === 'number' && Number.isFinite(value) : type === 'STRING' ? typeof value === 'string' : type === 'BOOLEAN' ? typeof value === 'boolean' : type === 'CHAR' ? typeof value === 'string' && value.length === 1 : false;
+  if (!valid) throw new Error(`${name} requires a ${type} value`);
+  return value;
+}
+
+function throwRuntime(state, message, line = state.activeLine) {
+  const raw = String(message || 'Unknown execution error');
+  const tagged = raw.match(/^(SyntaxError|NameError|TypeError|ZeroDivisionError|IndexError|ValueError|RecursionError|FileNotFoundError|RuntimeError):\s*(.*)$/);
+  const detail = tagged ? tagged[2] : raw;
+  const kind = tagged ? tagged[1] : /(?:unrecognized|recognize|unexpected|missing\b|unmatched|unclosed|invalid ELSE|invalid parameter|invalid declaration|expected an expression)/i.test(detail) ? 'SyntaxError' : /(?:unknown identifier|not been declared|undeclared|unknown variable)/i.test(detail) ? 'NameError' : /(?:requires a|expects an? (?:INTEGER|REAL|BOOLEAN|STRING)|type mismatch|incompatible|argument type)/i.test(detail) ? 'TypeError' : /(?:division by zero|divide by zero)/i.test(detail) ? 'ZeroDivisionError' : /(?:out of bounds|out of range|invalid array index|outside \[|incorrect number of array indices)/i.test(detail) ? 'IndexError' : /(?:maximum call depth|recursion|execution limit exceeded)/i.test(detail) ? 'RecursionError' : /(?:file not found)/i.test(detail) ? 'FileNotFoundError' : 'RuntimeError';
+  state.errorType = kind;
+  state.error = `Line ${line + 1}: ${detail}`;
+  state.activeLine = line;
+  state.done = true;
+  state.pendingInput = null;
+}
+
+function executeInstruction(state) {
+  if (state.done) return;
+  if (state.steps >= 10000) { throwRuntime(state, 'Execution stopped after 10,000 steps. Check your loop condition.'); return; }
+  while (state.pc < state.lines.length && !state.lines[state.pc].trim()) state.pc += 1;
+  if (state.pc >= state.lines.length) { state.done = true; state.activeLine = Math.max(0, state.lines.length - 1); return; }
+  state.activeLine = state.pc;
+  state.steps += 1;
+  const line = state.lines[state.pc].trim();
+  const upper = line.toUpperCase();
+  try {
+    if (upper.startsWith('//')) { state.pc += 1; return; }
+    const declaration = line.match(/^DECLARE\s+([A-Za-z_]\w*)\s*:\s*(INTEGER|REAL|STRING|BOOLEAN|CHAR)\s*$/i);
+    if (declaration) {
+      const [, name, type] = declaration;
+      if (Object.keys(state.vars).some(k => k.toUpperCase() === name.toUpperCase())) throw new Error(`Duplicate identifier ${name}`);
+      state.types[name] = type.toUpperCase();
+      state.vars[name] = type.toUpperCase() === 'STRING' ? '' : type.toUpperCase() === 'BOOLEAN' ? false : 0;
+      state.pc += 1; return;
+    }
+    const field = line.match(/^(?:PUBLIC|PRIVATE)\s+(?:DECLARE\s+)?([A-Za-z_]\w*)\s*:\s*([A-Za-z_]\w*)$/i);
+    if(field) declared.set(field[1].toUpperCase(),field[2].toUpperCase());
+    const constant = line.match(/^CONSTANT\s+([A-Za-z_]\w*)\s*=\s*(.+)$/i);
+    if (constant) {
+      const [, name, literal] = constant;
+      if (Object.keys(state.vars).some(k => k.toUpperCase() === name.toUpperCase())) throw new Error(`Duplicate identifier ${name}`);
+      if (!/^(?:-?\d+(?:\.\d+)?|TRUE|FALSE|"[^"]*"|'[^']*')$/i.test(literal.trim())) throw new Error('CONSTANT must use a literal value');
+      state.vars[name] = evaluateExpression(literal, state.vars);
+      state.constants.add(name); state.pc++; return;
+    }
+    if (upper === 'ELSE') { state.pc = (state.endifFor[state.pc] ?? state.pc) + 1; return; }
+    if (upper.startsWith('WHILE ')) {
+      const whileCondition = line.slice(6).trim().replace(/\s+DO$/i, '').trim();
+      const result = evaluateExpression(whileCondition, state.vars);
+      if (typeof result !== 'boolean') throw new Error('WHILE condition must be BOOLEAN');
+      state.pc = result ? state.pc + 1 : state.whileFor[state.pc] + 1; return;
+    }
+    if (upper === 'ENDWHILE') { state.pc = state.endwhileFor[state.pc]; return; }
+    if (upper === 'REPEAT') { state.pc++; return; }
+    if (upper.startsWith('UNTIL ')) {
+      const result = evaluateExpression(line.slice(6).trim(), state.vars);
+      if (typeof result !== 'boolean') throw new Error('UNTIL condition must be BOOLEAN');
+      state.pc = result ? state.pc + 1 : state.untilFor[state.pc] + 1; return;
+    }
+    if (upper.startsWith('IF ')) {
+      if (!upper.endsWith('THEN')) { throwRuntime(state, 'IF statements must end with THEN'); return; }
+      const condition = line.slice(2, -4).trim();
+      const result = evaluateExpression(condition, state.vars);
+      if (typeof result !== 'boolean') throw new Error('IF condition must be BOOLEAN');
+      state.pc = result ? state.pc + 1 : (state.elseFor[state.pc] ?? state.endifFor[state.pc]) + 1;
+      return;
+    }
+    if (upper === 'ENDIF') { state.pc += 1; return; }
+    const forMatch = line.match(/^FOR\s+([A-Za-z_]\w*)\s*(?:←|<-|=)\s*(.+?)\s+TO\s+(.+?)(?:\s+STEP\s+(.+))?$/i);
+    if (forMatch) {
+      const [, name, startSource, endSource, stepSource] = forMatch;
+      const start = Number(evaluateExpression(startSource, state.vars));
+      const end = Number(evaluateExpression(endSource, state.vars));
+      const step = stepSource ? Number(evaluateExpression(stepSource, state.vars)) : 1;
+      if (!Number.isFinite(start) || !Number.isFinite(end) || !Number.isFinite(step) || step === 0) { throwRuntime(state, 'FOR bounds and STEP must be valid numbers'); return; }
+      state.vars[name] = start;
+      const frame = { name, forLine: state.pc, nextLine: state.nextFor[state.pc], end, step };
+      state.loops.push(frame);
+      if ((step > 0 && start > end) || (step < 0 && start < end)) { state.loops.pop(); state.pc = frame.nextLine + 1; } else state.pc += 1;
+      return;
+    }
+    if (upper.startsWith('NEXT')) {
+      const frame = state.loops[state.loops.length - 1];
+      if (!frame || frame.nextLine !== state.pc) { throwRuntime(state, 'NEXT does not match the active FOR loop'); return; }
+      state.vars[frame.name] += frame.step;
+      const continuing = frame.step > 0 ? state.vars[frame.name] <= frame.end : state.vars[frame.name] >= frame.end;
+      if (continuing) state.pc = frame.forLine + 1;
+      else { state.loops.pop(); state.pc += 1; }
+      return;
+    }
+    if (/^OUTPUT(?:\s|$)/i.test(line)) {
+      if (!line.slice(6).trim()) throw new Error('SyntaxError: Unexpected end of statement after OUTPUT; expected an expression');
+      const expressions = splitTopLevel(line.slice(6).trim());
+      state.output.push(expressions.map((expression) => displayValue(evaluateExpression(expression, state.vars))).join(''));
+      state.pc += 1; return;
+    }
+    const inputMatch = line.match(/^INPUT\s+([A-Za-z_]\w*)$/i);
+    if (inputMatch) {
+      const [, name] = inputMatch;
+      if (!Object.prototype.hasOwnProperty.call(state.vars, name)) { throwRuntime(state, `Variable “${name}” has not been declared`); return; }
+      state.pendingInput = { name, line: state.activeLine };
+      return;
+    }
+    const assignment = line.match(/^([A-Za-z_]\w*)\s*(?:←|<-|=)\s*(.+)$/);
+    if (assignment) {
+      const [, name, expression] = assignment;
+      if (!Object.prototype.hasOwnProperty.call(state.vars, name)) { throwRuntime(state, `Variable “${name}” has not been declared`); return; }
+      if (state.constants.has(name)) throw new Error(`Cannot assign to constant ${name}`);
+      state.vars[name] = validateType(state.types[name], evaluateExpression(expression, state.vars), name);
+      state.pc += 1; return;
+    }
+    throwRuntime(state, 'I do not recognize this line yet. Try Cambridge-style DECLARE, FOR, IF, OUTPUT, or assignment syntax.');
+  } catch (error) { throwRuntime(state, error.message || 'Could not evaluate this line'); }
+}
+
+/* Cambridge 9618 interpreter extensions. All data remains in browser memory. */
+const baseCreateState = createState;
+const originalBuiltin9618 = callBuiltin;
+callBuiltin = function(name,args) { if(name==='SUBSTRING')return originalBuiltin9618('SUBSTRING',args);if(name==='INT'){if(args.length!==1||typeof args[0]!=='number')throw new Error('INT requires one numeric argument');return Math.trunc(args[0]);}if(name==='REAL'){if(args.length!==1)throw new Error('REAL requires one argument');const v=Number(args[0]);if(!Number.isFinite(v))throw new Error('Invalid REAL conversion');return v;}if(name==='STRING'){if(args.length!==1)throw new Error('STRING requires one argument');return String(args[0]);}return originalBuiltin9618(name,args);};
+const baseExecuteInstruction = executeInstruction;
+const baseEvaluateExpression = evaluateExpression;
+const baseTokenizeExpression = tokenizeExpression;
+const basePrimary = ExpressionParser.prototype.parsePrimary;
+const baseAdd = ExpressionParser.prototype.parseAdd;
+function clone9618(v) { if (v === undefined || v === null || typeof v !== 'object') return v; if(v.__pointer)return {...v}; if(v.__array)return {...v,cells:new Map([...v.cells].map(([k,x])=>[k,clone9618(x)]))}; if (v instanceof Set) return new Set([...v].map(clone9618)); if (Array.isArray(v)) return v.map(clone9618); return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,clone9618(x)])); }
+function findKey9618(o,k) { return Object.keys(o).find(x=>x.toUpperCase()===String(k).toUpperCase()); }
+function resolve9618(o,k) { const key=findKey9618(o,k); if (key===undefined) throw new Error(`Unknown identifier ${k}`); return o[key]; }
+function typeDefault9618(t,defs) { const name=t.trim().toUpperCase(); if(name==='STRING') return ''; if(name==='BOOLEAN') return false; if(name==='CHAR') return ''; if(name==='INTEGER'||name==='REAL') return 0; if(name==='DATE') return ''; const def=defs?.[name]; if(!def) return null; if(def.kind==='record') return Object.fromEntries(def.fields.map(([k,ty])=>[k,typeDefault9618(ty,defs)])); if(def.kind==='set') return new Set(); if(def.kind==='pointer') return {__pointer:true,target:null}; if(def.kind==='enum') return def.values[0]; return null; }
+function makeArray9618(bounds,type,defs) { const dimensions=bounds.map(p=>p.split(':').map(Number)); if(dimensions.some(p=>p.length!==2||!p.every(Number.isInteger)||p[0]>p[1])) throw new Error('Invalid array bounds'); const cells=new Map(); return {__array:true,bounds:dimensions,elementType:type,cells,defs}; }
+function indexArray9618(a,indices) { if(!a?.__array) throw new Error('Cannot index a non-array value'); if(indices.length!==a.bounds.length) throw new Error('Incorrect number of array indices'); indices.forEach((v,i)=>{if(!Number.isInteger(v)||v<a.bounds[i][0]||v>a.bounds[i][1]) throw new Error(`Array index ${v} outside [${a.bounds[i].join(':')}]`);}); return indices.join(','); }
+function getIndex9618(a,indices) { if(typeof a==='string'){if(indices.length!==1||!Number.isInteger(indices[0])||indices[0]<1||indices[0]>a.length)throw new Error('String index outside valid range 1..'+a.length);return a.charAt(indices[0]-1);} const k=indexArray9618(a,indices); if(!a.cells.has(k)) a.cells.set(k,typeDefault9618(a.elementType,a.defs)); return a.cells.get(k); }
+function getPath9618(vars,path,evalFn) { const head=path.match(/^([A-Za-z][\w]*)/); if(!head) throw new Error('Invalid identifier path'); let value=resolve9618(vars,head[1]); let rest=path.slice(head[0].length); while(rest.trim()) {rest=rest.trim(); if(rest[0]==='.') {const m=rest.match(/^\.([A-Za-z]\w*)/); if(!m) throw new Error('Invalid property'); value=resolve9618(value,m[1]); rest=rest.slice(m[0].length);} else if(rest[0]==='[') {const close=rest.indexOf(']'); if(close<0) throw new Error('Missing ]'); const indices=splitTopLevel(rest.slice(1,close)).map(evalFn); value=getIndex9618(value,indices); rest=rest.slice(close+1);} else throw new Error('Invalid access path');} return value; }
+function setPath9618(state,path,value) {const head=path.match(/^([A-Za-z]\w*)/); if(!head) throw new Error('Invalid assignment target'); const name=findKey9618(state.vars,head[1]); if(!name) throw new Error(`Undeclared variable ${head[1]}`); if(state.constants.has(name)) throw new Error(`Cannot assign to constant ${name}`); let rest=path.slice(head[0].length).trim(); if(rest==='^'){const ptr=state.vars[name];if(!ptr?.__pointer||!ptr.target)throw new Error('Unassigned pointer');return setPath9618(state,ptr.target,value);}if(!rest){const ty=state.types[name]; if(ty?.toUpperCase()==='DATE'&&!/^(\d{2})\/(\d{2})\/(\d{4})$/.test(String(value)))throw new Error(name+' requires a DATE');if(ty && ['INTEGER','REAL','STRING','CHAR','BOOLEAN'].includes(ty.toUpperCase())) validateType(ty.toUpperCase(),value,name); if(ty && state.classes?.[ty.toUpperCase()] && (!value?.__class || !classChain9618(state,value.__class).some(c=>c.name.toUpperCase()===ty.toUpperCase())))throw new Error(name+' requires a '+ty+' object'); if(state.vars[name]?.__array && value?.__array) {if(JSON.stringify(state.vars[name].bounds)!==JSON.stringify(value.bounds)||state.vars[name].elementType.toUpperCase()!==value.elementType.toUpperCase()) throw new Error('Incompatible arrays');} state.vars[name]=clone9618(value);return;}
+ let obj=state.vars[name]; while(rest) {if(rest[0]==='.') {const m=rest.match(/^\.([A-Za-z]\w*)/);if(!m) throw new Error('Invalid field'); const key=findKey9618(obj,m[1]);if(!key) throw new Error(`Unknown field ${m[1]}`);rest=rest.slice(m[0].length).trim();if(!rest){obj[key]=clone9618(value);return;}obj=obj[key];} else if(rest[0]==='['){const close=rest.indexOf(']');if(close<0)throw new Error('Missing ]');const indices=splitTopLevel(rest.slice(1,close)).map(x=>evaluateExpression(x,state.vars));const key=indexArray9618(obj,indices);rest=rest.slice(close+1).trim();if(!rest){if(['INTEGER','REAL','STRING','BOOLEAN','CHAR'].includes(obj.elementType.toUpperCase()))validateType(obj.elementType.toUpperCase(),value,path);obj.cells.set(key,clone9618(value));return;} if(!obj.cells.has(key))obj.cells.set(key,typeDefault9618(obj.elementType,obj.defs));obj=obj.cells.get(key);}else throw new Error('Invalid target path');}}
+function parseParams9618(s) {if(!s.trim())return [];return splitTopLevel(s).map(x=>{const m=x.match(/^(?:(BYREF|BYVAL)\s+)?([A-Za-z]\w*)\s*:\s*(ARRAY\s+OF\s+\w+|\w+)$/i);if(!m)throw new Error(`Invalid parameter ${x}`);return {byref:(m[1]||'').toUpperCase()==='BYREF',name:m[2],type:m[3]};});}
+function parseBlocks9618(s) {const lines=s.lines, defs={},subs={},classes={},skip={},caseMap={};let blocks=[];for(let i=0;i<lines.length;i++){const t=lines[i].trim();let m;
+ if((m=t.match(/^TYPE\s+(\w+)\s*=\s*\((.+)\)$/i))){defs[m[1].toUpperCase()]={kind:'enum',values:splitTopLevel(m[2])};skip[i]=i;continue;}
+ if((m=t.match(/^TYPE\s+(\w+)\s*=\s*\^(\w+)$/i))){defs[m[1].toUpperCase()]={kind:'pointer',to:m[2]};skip[i]=i;continue;}
+ if((m=t.match(/^TYPE\s+(\w+)\s*=\s*SET\s+OF\s+(\w+)$/i))){defs[m[1].toUpperCase()]={kind:'set',of:m[2]};skip[i]=i;continue;}
+ if((m=t.match(/^TYPE\s+(\w+)$/i))){const fields=[];let j=i+1;for(;j<lines.length&&!/^ENDTYPE$/i.test(lines[j].trim());j++){const f=lines[j].trim().match(/^DECLARE\s+(\w+)\s*:\s*(\w+)$/i);if(f)fields.push([f[1],f[2]]);else if(lines[j].trim()&&!lines[j].trim().startsWith('//'))throw new Error(`Invalid record field on line ${j+1}`);}if(j===lines.length)throw new Error(`Missing ENDTYPE on line ${i+1}`);defs[m[1].toUpperCase()]={kind:'record',fields};skip[i]=j;i=j;continue;}
+ if((m=t.match(/^CLASS\s+(\w+)(?:\s+INHERITS\s+(\w+))?$/i))){let j=i+1;for(;j<lines.length&&!/^ENDCLASS$/i.test(lines[j].trim());j++);if(j===lines.length)throw new Error(`Missing ENDCLASS at line ${i+1}`);const methods={},fields=[];for(let k=i+1;k<j;k++){const f=lines[k].trim().match(/^(?:PUBLIC|PRIVATE)?\s*(?:DECLARE\s+)?(\w+)\s*:\s*(\w+)$/i);if(f){fields.push([f[1],f[2],/^PRIVATE\b/i.test(lines[k].trim())?'PRIVATE':'PUBLIC']);continue;}const mm=lines[k].trim().match(/^(?:PUBLIC\s+|PRIVATE\s+)?(PROCEDURE|FUNCTION)\s+(\w+)\s*\((.*)\)(?:\s+RETURNS\s+(\w+))?$/i);if(mm){let e=k+1;const ending=mm[1].toUpperCase()==='FUNCTION'?'ENDFUNCTION':'ENDPROCEDURE';for(;e<j&&!new RegExp('^'+ending+'$','i').test(lines[e].trim());e++);if(e>=j)throw new Error('Unclosed class method');methods[mm[2].toUpperCase()]={name:mm[2],kind:mm[1].toUpperCase(),params:parseParams9618(mm[3]),returns:mm[4]||null,start:k,end:e,access:/^PRIVATE\b/i.test(lines[k].trim())?'PRIVATE':'PUBLIC'};k=e;}}classes[m[1].toUpperCase()]={name:m[1],parent:m[2]||null,start:i,end:j,fields,methods};skip[i]=j;i=j;continue;}
+ if((m=t.match(/^(?:PUBLIC\s+|PRIVATE\s+)?(PROCEDURE|FUNCTION)\s+(\w+)\s*\((.*)\)(?:\s+RETURNS\s+(\w+))?$/i))){let j=i+1;const end=m[1].toUpperCase()==='FUNCTION'?'ENDFUNCTION':'ENDPROCEDURE';for(;j<lines.length&&!new RegExp('^'+end+'$','i').test(lines[j].trim());j++);if(j===lines.length)throw new Error(`Missing ${end} at line ${i+1}`);subs[m[2].toUpperCase()]={name:m[2],kind:m[1].toUpperCase(),params:parseParams9618(m[3]),returns:m[4]||null,start:i,end:j};skip[i]=j;i=j;continue;}
+ if((m=t.match(/^CASE\s+OF\s+(.+)$/i))){let j=i+1;for(;j<lines.length&&!/^ENDCASE$/i.test(lines[j].trim());j++);if(j===lines.length)throw new Error(`Missing ENDCASE on line ${i+1}`);caseMap[i]={expr:m[1],end:j,arms:[]};let current=null;for(let k=i+1;k<j;k++){const a=lines[k].trim().match(/^(.+?)\s*:\s*(.*)$/);if(a){current={label:a[1],start:k,body:k+1,inline:a[2]};caseMap[i].arms.push(current);}}for(let k=0;k<caseMap[i].arms.length;k++)caseMap[i].arms[k].stop=k+1<caseMap[i].arms.length?caseMap[i].arms[k+1].start:j;continue;}
+ }
+ return {defs,subs,classes,skip,caseMap};}
+createState=function(source){const s=baseCreateState(source.replace(/<--/g,'<-'));Object.assign(s,parseBlocks9618(s));s.files={};s.openFiles={};s.callDepth=0;s.returned=false;s.enumValues=new Set(Object.values(s.defs).filter(x=>x.kind==='enum').flatMap(x=>x.values.map(y=>y.toUpperCase())));return s;};
+tokenizeExpression=function(source){const tokens=baseTokenizeExpression(normalizeSourceQuotes9618(source).replace(/\u2018|\u2019|\uA78C/g,"'").replace(/\u2212/g,'-').replace(/\u2190/g,'<-').replace(/\s*&\s*/g,' & '));return tokens;};
+// Extend the lexer with array, record, and string-concatenation punctuation.
+tokenizeExpression=function(source){const tokens=[];let i=0;while(i<source.length){if(/\s/.test(source[i])){i++;continue;}const rest=source.slice(i);const two=rest.slice(0,2);if(['<>','<=','>='].includes(two)){tokens.push({type:'op',value:two});i+=2;continue;}let c=source[i];if('(),+-*/%=<>[].&^'.includes(c)){tokens.push({type:'op',value:c});i++;continue;}if(c==='"'||c==="'"||c==='\uA78C'){const quote=c;let j=i+1;while(j<source.length&&source[j]!==quote)j++;if(j>=source.length)throw new Error('Unclosed string literal');tokens.push({type:'string',value:source.slice(i+1,j)});i=j+1;continue;}const date=rest.match(/^(\d{2})\/(\d{2})\/(\d{4})(?!\d)/);if(date){const dd=Number(date[1]),mm=Number(date[2]),yy=Number(date[3]),d=new Date(Date.UTC(yy,mm-1,dd));if(d.getUTCDate()!==dd||d.getUTCMonth()!==mm-1||d.getUTCFullYear()!==yy)throw new Error('Invalid DATE literal');tokens.push({type:'string',value:date[0],date:true});i+=date[0].length;continue;}const n=rest.match(/^\d+(?:\.\d+)?/);if(n){tokens.push({type:'number',value:Number(n[0])});i+=n[0].length;continue;}const w=rest.match(/^[A-Za-z][A-Za-z0-9_]*/);if(w){tokens.push({type:'word',value:w[0].toUpperCase(),raw:w[0]});i+=w[0].length;continue;}throw new Error(`Unexpected character ${c}`);}tokens.push({type:'eof',value:''});return tokens;};
+ExpressionParser.prototype.parseAdd=function(){let v=this.parseMultiply();while(['+','-','&'].includes(this.current().value)){const op=this.current().value;this.index++;const r=this.parseMultiply();if(op==='&')v=String(v)+String(r);else if(op==='+'){if(typeof v==='string'||typeof r==='string')v=String(v)+String(r);else if(typeof v==='number'&&typeof r==='number')v+=r;else throw new TypeError('Invalid operands for +');}else v-=r;}return v;};
+const priorUnary9618=ExpressionParser.prototype.parseUnary;
+ExpressionParser.prototype.parseUnary=function(){if(this.eat('^')){const t=this.current();if(t.type!=='word')throw new Error('Pointer address must identify a variable');this.index++;return {__pointer:true,target:t.raw};}return priorUnary9618.call(this);};
+ExpressionParser.prototype.parsePrimary=function(){const token=this.current();if(token.type==='word'){this.index++;if(token.value==='TRUE')return true;if(token.value==='FALSE')return false;let v;if(this.eat('(')){const args=[];if(!this.eat(')')){do{args.push(this.parseOr());}while(this.eat(','));this.expect(')');}if(this.context?.subs?.[token.value])v=invoke9618(this.context,token.value,args,null);else if(token.value==='EOF') {const f=this.context?.openFiles[String(args[0])];if(!f||f.mode!=='READ')throw new Error('EOF requires a file opened for READ');v=f.position>=f.data.length;}else v=callBuiltin(token.value,args);}else{const key=findKey9618(this.variables,token.raw);if(key!==undefined)v=this.variables[key];else if(this.context?.enumValues?.has(token.value))v=token.raw;else throw new Error(`Unknown identifier ${token.raw}`);}while(this.current().value==='['||this.current().value==='.'||this.current().value==='^'){if(this.eat('^')){if(!v?.__pointer||!v.target)throw new Error('Cannot dereference an unassigned pointer');v=resolve9618(this.variables,v.target);}else if(this.eat('[')){const indices=[];do{indices.push(this.parseOr());}while(this.eat(','));this.expect(']');v=getIndex9618(v,indices);}else{this.expect('.');const prop=this.current();if(prop.type!=='word')throw new Error('Expected field name');this.index++;if(this.eat('(')){const args=[];if(!this.eat(')')){do{args.push(this.parseOr());}while(this.eat(','));this.expect(')');}if(!this.context)throw new Error('Method call outside program');const method=findMethod9618(this.context,v.__class,prop.raw);if(method.kind!=='FUNCTION')throw new Error('Procedure cannot be used in an expression');v=invokeMethod9618(this.context,v,prop.raw,args);}else v=resolve9618(v,prop.raw);}}return v;}return basePrimary.call(this);};
+
+// Numeric operators reject invalid operands and zero divisors at runtime.
+ExpressionParser.prototype.parseMultiply=function(){
+  let value=this.parseUnary();
+  while(['*','/','DIV','MOD'].includes(this.current().value)){
+    const op=this.current().value;this.index++;const right=this.parseUnary();
+    // Extension: STRING * non-negative INTEGER repeats the string.
+    if(op==='*' && ((typeof value==='string' && typeof right==='number') || (typeof value==='number' && typeof right==='string'))){
+      const str=typeof value==='string'?value:right;
+      const count=typeof value==='number'?value:right;
+      if(!Number.isSafeInteger(count)||count<0)throw new Error('TypeError: String repetition requires a non-negative INTEGER');
+      if(str.length*count>1000000)throw new Error('ValueError: String repetition exceeds the output limit');
+      value=str.repeat(count);
+      continue;
+    }
+    if(typeof value!=='number'||typeof right!=='number'||!Number.isFinite(value)||!Number.isFinite(right))throw new Error('TypeError: Arithmetic operands must be numeric');
+    if((op==='/'||op==='DIV'||op==='MOD')&&right===0)throw new Error('ZeroDivisionError: Division by zero');
+    if((op==='DIV'||op==='MOD')&&(!Number.isInteger(value)||!Number.isInteger(right)))throw new Error('TypeError: DIV and MOD require INTEGER operands');
+    if(op==='*')value*=right;else if(op==='/')value/=right;else if(op==='DIV')value=Math.trunc(value/right);else value%=right;
+    if(!Number.isFinite(value))throw new Error('ValueError: Non-finite arithmetic result');
+  }
+  return value;
+};
+// 9618 method expressions, visibility, and callable result checks.
+function classChain9618(s,name){const chain=[];const seen=new Set();while(name){const key=name.toUpperCase();if(seen.has(key))throw new Error('Circular inheritance');seen.add(key);const c=s.classes[key];if(!c)throw new Error(`Unknown superclass ${name}`);chain.push(c);name=c.parent;}return chain;}
+function memberAccess9618(s,obj,member,kind){if(!obj||!obj.__class)return;for(const c of classChain9618(s,obj.__class)){const entry=kind==='method'?c.methods[member.toUpperCase()]:c.fields.find(f=>f[0].toUpperCase()===member.toUpperCase());if(entry){const access=kind==='method'?entry.access:entry[2];if(access==='PRIVATE'&&s.currentObject!==obj)throw new Error(`Private ${kind} ${member} cannot be accessed here`);return;}}}
+const priorResolve9618=resolve9618;
+resolve9618=function(o,k){if(active9618&&o?.__class)memberAccess9618(active9618,o,k,'field');return priorResolve9618(o,k);};
+const oldFindMethod9618=findMethod9618;
+findMethod9618=function(s,klass,method){classChain9618(s,klass);return oldFindMethod9618(s,klass,method);};
+const oldInvokeMethod9618=invokeMethod9618;
+invokeMethod9618=function(s,obj,method,args,ownerOverride=null){if(!obj?.__class)throw new Error('Method target is not an object');if(!ownerOverride)memberAccess9618(s,obj,method,'method');const def=findMethod9618(s,ownerOverride||obj.__class,method);if(args.length!==def.params.length)throw new Error(`${method} expects ${def.params.length} arguments`);const result=oldInvokeMethod9618(s,obj,method,args,ownerOverride);if(def.kind==='FUNCTION'){if(result===undefined)throw new Error(`Function ${method} did not RETURN a value${s.error ? ": " + s.error : ""}`);if(def.returns){const ret=def.returns.toUpperCase();if(s.classes[ret]){if(!result?.__class||!classChain9618(s,result.__class).some(c=>c.name.toUpperCase()===ret))throw new Error(`Function ${method} must return ${def.returns}`);}else validateType(ret,result,method);}}return result;};
+const oldSetPath9618=setPath9618;
+setPath9618=function(s,path,value){const m=path.match(/^([A-Za-z]\w*)\.([A-Za-z]\w*)/);if(m){const key=findKey9618(s.vars,m[1]);if(key!==undefined)memberAccess9618(s,s.vars[key],m[2],'field');}return oldSetPath9618(s,path,value);};
+let active9618=null;
+evaluateExpression=function(source,variables){const p=new ExpressionParser(source,variables);p.context=active9618;return p.parse();};
+function invoke9618(s,name,args,rawArgs){const sub=s.subs[name.toUpperCase()];if(!sub)throw new Error(`Unknown subprogram ${name}`);if(args.length!==sub.params.length)throw new Error(`${name} expects ${sub.params.length} arguments`);if(s.callDepth>50)throw new Error('Maximum call depth exceeded');const caller={pc:s.pc,vars:s.vars,types:s.types,constants:s.constants,loops:s.loops,pendingInput:s.pendingInput,returned:s.returned,returnValue:s.returnValue,done:s.done};s.returned=false;s.returnValue=undefined;const locals=Object.create(null);const refs=[];sub.params.forEach((p,i)=>{locals[p.name]=p.byref && args[i]?.__array ? args[i] : clone9618(args[i]);if(/^ARRAY\s+OF\s+/i.test(p.type)){if(!args[i]?.__array)throw new Error('Expected array argument for '+p.name);const element=p.type.replace(/^ARRAY\s+OF\s+/i,'').toUpperCase();if(args[i].elementType.toUpperCase()!==element)throw new Error('Array element type mismatch for '+p.name);}else if(['INTEGER','REAL','STRING','CHAR','BOOLEAN'].includes(p.type.toUpperCase()))validateType(p.type.toUpperCase(),args[i],p.name);else if(s.classes?.[p.type.toUpperCase()] && (!args[i]?.__class||!classChain9618(s,args[i].__class).some(c=>c.name.toUpperCase()===p.type.toUpperCase())))throw new Error(p.name+' requires a '+p.type+' object');if(p.byref){if(!rawArgs||!/^[A-Za-z]\w*$/.test(rawArgs[i]))throw new Error('BYREF requires a variable');refs.push([p.name,rawArgs[i]]);}});s.vars=new Proxy(locals,{get(t,k){if(typeof k==='symbol')return t[k];const x=findKey9618(t,k);if(x!==undefined)return t[x];const g=findKey9618(caller.vars,k);return g===undefined?undefined:caller.vars[g];},set(t,k,v){const x=findKey9618(t,k);if(x!==undefined)t[x]=v;else{const g=findKey9618(caller.vars,k);if(g!==undefined)caller.vars[g]=v;else t[k]=v;}return true;},ownKeys(t){return [...new Set([...Reflect.ownKeys(t),...Reflect.ownKeys(caller.vars)])];},getOwnPropertyDescriptor(t,k){return Object.getOwnPropertyDescriptor(t,k)||{configurable:true,enumerable:true,writable:true,value:undefined};}});s.types={...caller.types,...Object.fromEntries(sub.params.map(p=>[p.name,p.type.toUpperCase()]))};s.constants=new Set(caller.constants);s.loops=[];s.pc=sub.start+1;s.callDepth++;let result;try{while(s.pc<sub.end&&!s.error&&!s.pendingInput&&!s.returned){executeInstruction(s);if(s.steps>10000)throw new Error('Execution limit exceeded');}if(s.pendingInput)throw new Error('INPUT within subprogram is not supported during synchronous calls');result=s.returnValue;s.returned=false;s.returnValue=undefined;for(const [p,target] of refs){const key=findKey9618(caller.vars,target);if(key===undefined)throw new Error(`Unknown BYREF variable ${target}`);caller.vars[key]=clone9618(s.vars[p]);}}finally{s.pc=caller.pc;s.vars=caller.vars;s.types=caller.types;s.constants=caller.constants;s.loops=caller.loops;s.pendingInput=caller.pendingInput;s.returned=caller.returned;s.returnValue=caller.returnValue;s.done=caller.done;s.callDepth--;}return result;}
+function newObject9618(s,name,args,skipCtor=false){const c=s.classes[name.toUpperCase()];if(!c)throw new Error(`Unknown class ${name}`);let obj=c.parent?newObject9618(s,c.parent,[],true):{__class:name};for(const [key,type] of c.fields)obj[key]=typeDefault9618(type,s.defs);obj.__class=name;const ctor=c.methods.NEW;if(ctor&&!skipCtor)invokeMethod9618(s,obj,'NEW',args);else if(args.length&&!skipCtor)throw new Error('Constructor arguments supplied without NEW');return obj;}
+function findMethod9618(s,klass,method){let c=s.classes[klass.toUpperCase()];while(c){if(c.methods[method.toUpperCase()])return c.methods[method.toUpperCase()];c=c.parent?s.classes[c.parent.toUpperCase()]:null;}throw new Error(`Unknown method ${method}`);}
+function invokeMethod9618(s,obj,method,args,ownerOverride=null){const sub=findMethod9618(s,ownerOverride||obj.__class,method),old=s.subs[method.toUpperCase()],oldVars=s.vars;const priorObject=s.currentObject,priorClass=s.currentClass;const temp={...s.vars,...obj}, initialFields=Object.fromEntries(Object.keys(obj).map(k=>[k,clone9618(obj[k])]));s.vars=temp;s.currentObject=obj;s.currentClass=ownerOverride||obj.__class;s.subs[method.toUpperCase()]=sub;try{const result=invoke9618(s,method,args,null);for(const k of Object.keys(obj))if(k!=='__class'&&Object.prototype.hasOwnProperty.call(temp,k)&&JSON.stringify(temp[k])!==JSON.stringify(initialFields[k]))obj[k]=temp[k];return result;}finally{s.vars=oldVars;s.currentObject=priorObject;s.currentClass=priorClass;if(old)s.subs[method.toUpperCase()]=old;else delete s.subs[method.toUpperCase()];}}
+function breakLoop9618(s){
+  // Find the innermost enclosing loop by source interval, including nested loops.
+  const candidates=[];
+  for(const [start,end] of Object.entries(s.nextFor))if(+start<s.pc&&s.pc<end)candidates.push({start:+start,end:+end,kind:'FOR'});
+  for(const [start,end] of Object.entries(s.whileFor))if(+start<s.pc&&s.pc<end)candidates.push({start:+start,end:+end,kind:'WHILE'});
+  for(const [start,end] of Object.entries(s.repeatFor))if(+start<s.pc&&s.pc<end)candidates.push({start:+start,end:+end,kind:'REPEAT'});
+  candidates.sort((a,b)=>b.start-a.start);
+  if(!candidates.length)throw new Error('BREAK is only permitted inside a loop');
+  const loop=candidates[0];
+  if(loop.kind==='FOR'){
+    const frameIndex=s.loops.findLastIndex(f=>f.forLine===loop.start);
+    if(frameIndex>=0)s.loops.splice(frameIndex);
+  }
+  s.pc=loop.end+1;
+}
+function continueLoop9618(s){
+  // CONTINUE targets the innermost enclosing loop, not an enclosing IF.
+  const candidates=[];
+  for(const [start,end] of Object.entries(s.nextFor))if(+start<s.pc&&s.pc<end)candidates.push({start:+start,end:+end,kind:'FOR'});
+  for(const [start,end] of Object.entries(s.whileFor))if(+start<s.pc&&s.pc<end)candidates.push({start:+start,end:+end,kind:'WHILE'});
+  for(const [start,end] of Object.entries(s.repeatFor))if(+start<s.pc&&s.pc<end)candidates.push({start:+start,end:+end,kind:'REPEAT'});
+  candidates.sort((a,b)=>b.start-a.start);
+  if(!candidates.length)throw new Error('SyntaxError: CONTINUE is only permitted inside a loop');
+  // NEXT increments FOR, ENDWHILE rechecks WHILE, UNTIL evaluates REPEAT.
+  s.pc=candidates[0].end;
+}
+function runAdvanced9618(s){const line=s.lines[s.pc].trim().replace(/<--/g,'<-'),up=line.toUpperCase();let m;
+ if(up==='BREAK'){breakLoop9618(s);return true;}
+ if(up==='CONTINUE'){continueLoop9618(s);return true;}
+ if(s.skip[s.pc]!==undefined){s.pc=s.skip[s.pc]+1;return true;}
+ if(/^END(?:TYPE|CLASS|PROCEDURE|FUNCTION|CASE)$/i.test(line)){s.pc++;return true;}
+ if((m=line.match(/^DECLARE\s+([A-Za-z]\w*(?:\s*,\s*[A-Za-z]\w*)+)\s*:\s*(INTEGER|REAL|STRING|BOOLEAN|CHAR|DATE)$/i))){for(const name of m[1].split(',').map(x=>x.trim())){if(findKey9618(s.vars,name)!==undefined)throw new Error('Duplicate identifier '+name);s.vars[name]=typeDefault9618(m[2],s.defs);s.types[name]=m[2].toUpperCase();}s.pc++;return true;}
+ if((m=line.match(/^DECLARE\s+([A-Za-z]\w*(?:\s*,\s*[A-Za-z]\w*)*)\s*:\s*([A-Za-z]\w*)$/i)) && s.classes[m[2].toUpperCase()]){for(const variable of m[1].split(',').map(x=>x.trim())){if(findKey9618(s.vars,variable)!==undefined)throw new Error('Duplicate identifier '+variable);s.vars[variable]=null;s.types[variable]=m[2];}s.pc++;return true;}
+ if((m=line.match(/^DECLARE\s+([A-Za-z]\w*)\s*:\s*ARRAY\s*\[([^\]]+)\]\s+OF\s+(\w+)$/i))){if(findKey9618(s.vars,m[1])!==undefined)throw new Error('Duplicate identifier');s.vars[m[1]]=makeArray9618(splitTopLevel(m[2]),m[3],s.defs);s.types[m[1]]='ARRAY';s.pc++;return true;}
+ if((m=line.match(/^DECLARE\s+([A-Za-z]\w*)\s*:\s*(\w+)$/i))&& (m[2].toUpperCase()==='DATE'||s.defs[m[2].toUpperCase()])){if(findKey9618(s.vars,m[1])!==undefined)throw new Error('Duplicate identifier');s.vars[m[1]]=typeDefault9618(m[2],s.defs);s.types[m[1]]=m[2];s.pc++;return true;}
+ if((m=line.match(/^DEFINE\s+(\w+)\s*\((.*)\)\s*:\s*(\w+)$/i))){const def=s.defs[m[3].toUpperCase()];if(!def||def.kind!=='set')throw new Error('Unknown set type');s.vars[m[1]]=new Set(splitTopLevel(m[2]).map(x=>evaluateExpression(x,s.vars)));s.types[m[1]]=m[3];s.constants.add(m[1]);s.pc++;return true;}
+ if(s.caseMap[s.pc]){const block=s.caseMap[s.pc],v=evaluateExpression(block.expr,s.vars);let chosen;for(const arm of block.arms){if(/^OTHERWISE$/i.test(arm.label)){chosen=arm;break;}const range=arm.label.match(/^(.+?)\s+TO\s+(.+)$/i);if(range){const a=evaluateExpression(range[1],s.vars),b=evaluateExpression(range[2],s.vars);if(v>=a&&v<=b){chosen=arm;break;}}else if(v===evaluateExpression(arm.label,s.vars)){chosen=arm;break;}}if(!chosen){s.pc=block.end+1;return true;}s.caseEnd=block.end;s.caseStop=chosen.stop;if(chosen.inline){s.inlineLine=chosen.inline;s.pc=chosen.start; }else s.pc=chosen.body;return true;}
+ if(s.caseEnd!==undefined&&s.pc>=s.caseStop){s.pc=s.caseEnd+1;s.caseEnd=undefined;s.caseStop=undefined;return true;}
+ if(s.inlineLine){const code=s.inlineLine;s.inlineLine=null;const at=s.pc;const old=s.lines[at];s.lines[at]=code;try{executeInstruction(s);}finally{s.lines[at]=old;}return true;}
+ if((m=line.match(/^([A-Za-z]\w*)\s*(?:←|<-)\s*NEW\s+(\w+)\s*\((.*)\)$/i))){const args=splitTopLevel(m[3]).map(x=>evaluateExpression(x,s.vars));s.vars[m[1]]=newObject9618(s,m[2],args);s.types[m[1]]=m[2];s.pc++;return true;}
+ if((m=line.match(/^SUPER\.([A-Za-z]\w*)\s*\((.*)\)$/i))){if(!s.currentObject||!s.currentClass)throw new Error('SUPER outside class method');const parent=s.classes[s.currentClass.toUpperCase()]?.parent;if(!parent)throw new Error('Class has no superclass');invokeMethod9618(s,s.currentObject,m[1],splitTopLevel(m[2]).map(x=>evaluateExpression(x,s.vars)),parent);s.pc++;return true;}
+ if((m=line.match(/^([A-Za-z]\w*)\.([A-Za-z]\w*)\s*\((.*)\)$/i))){const obj=resolve9618(s.vars,m[1]);invokeMethod9618(s,obj,m[2],splitTopLevel(m[3]).map(x=>evaluateExpression(x,s.vars)));s.pc++;return true;}
+ if((m=line.match(/^CALL\s+(\w+)\s*\((.*)\)$/i))){const raw=splitTopLevel(m[2]);invoke9618(s,m[1],raw.map(x=>evaluateExpression(x,s.vars)),raw);s.pc++;return true;}
+ if((m=line.match(/^RETURN\s+(.+)$/i))){s.returnValue=evaluateExpression(m[1],s.vars);s.returned=true;s.pc++;return true;}
+ if((m=line.match(/^OPENFILE\s+(.+?)\s+FOR\s+(READ|WRITE|APPEND|RANDOM)$/i))){const name=String(evaluateExpression(m[1],s.vars)),mode=m[2].toUpperCase();if(s.openFiles[name])throw new Error('File already open');if(mode==='READ'&&!s.files[name])throw new Error(`File not found: ${name}`);if(mode==='WRITE')s.files[name]=[];if(!s.files[name])s.files[name]=[];s.openFiles[name]={mode,data:s.files[name],position:mode==='APPEND'?s.files[name].length:0};s.pc++;return true;}
+ if((m=line.match(/^CLOSEFILE\s+(.+)$/i))){const name=String(evaluateExpression(m[1],s.vars));if(!s.openFiles[name])throw new Error('File is not open');delete s.openFiles[name];s.pc++;return true;}
+ if((m=line.match(/^(READFILE|WRITEFILE|SEEK|GETRECORD|PUTRECORD)\s+(.+?)\s*,\s*(.+)$/i))){const op=m[1].toUpperCase(),name=String(evaluateExpression(m[2],s.vars)),f=s.openFiles[name];if(!f)throw new Error(`File not open: ${name}`);if(op==='SEEK'){if(f.mode!=='RANDOM')throw new Error('SEEK requires RANDOM mode');const p=evaluateExpression(m[3],s.vars);if(!Number.isInteger(p)||p<0)throw new Error('Invalid file address');f.position=p;}else if(op==='READFILE'||op==='GETRECORD'){if(f.mode!==(op==='READFILE'?'READ':'RANDOM'))throw new Error('Wrong file mode');if(f.position>=f.data.length||f.data[f.position]===undefined)throw new Error('Read past end of file');setPath9618(s,m[3],clone9618(f.data[f.position++]));}else{if(!['WRITE','APPEND','RANDOM'].includes(f.mode))throw new Error('File not writable');if(op==='PUTRECORD'&&f.mode!=='RANDOM')throw new Error('PUTRECORD requires RANDOM mode');f.data[f.position++]=clone9618(evaluateExpression(m[3],s.vars));}s.pc++;return true;}
+ if((m=line.match(/^INPUT\s+([A-Za-z]\w*(?:\[[^\]]+\]|\.\w+)*)$/i))&&(m[1].includes('[')||m[1].includes('.'))){s.pendingInput={name:m[1],line:s.pc};return true;}
+ if((m=line.match(/^([A-Za-z]\w*(?:\[[^\]]+\]|\.\w+|\^)+)\s*(?:←|<-)\s*(.+)$/i))){setPath9618(s,m[1],evaluateExpression(m[2],s.vars));s.pc++;return true;}
+ if((m=line.match(/^([A-Za-z]\w*)\s*(?:←|<-)\s*(.+)$/i))&&s.vars[m[1]]!==undefined&&!s.types[m[1]]){setPath9618(s,m[1],evaluateExpression(m[2],s.vars));s.pc++;return true;}
+ if((m=line.match(/^([A-Za-z]\w*)\s*(?:←|<-)\s*(.+)$/i))&&s.defs&&s.types[m[1]]&&!['INTEGER','REAL','STRING','CHAR','BOOLEAN'].includes(s.types[m[1]].toUpperCase())){setPath9618(s,m[1],evaluateExpression(m[2],s.vars));s.pc++;return true;}
+ return false;}
+executeInstruction=function(s){if(s.done)return;while(s.pc<s.lines.length&&!s.lines[s.pc].trim())s.pc++;if(s.pc>=s.lines.length){s.done=true;return;}const prior=active9618;active9618=s;try{if(runAdvanced9618(s))return;baseExecuteInstruction(s);}catch(e){throwRuntime(s,e.message||String(e));}finally{active9618=prior;}};
+const oldDisplay9618=displayValue;
+displayValue=function(v){if(v?.__pointer)return v.target?'^'+v.target:'NULL';if(v?.__array)return `[ARRAY ${v.bounds.map(x=>x.join(':')).join(',')}]`;if(v instanceof Set)return `{${[...v].map(displayValue).join(', ')}}`;if(v&&typeof v==='object')return JSON.stringify(v);return oldDisplay9618(v);};
+
+function continueProgram() {
+  while (!interpreterState.done && !interpreterState.pendingInput) executeInstruction(interpreterState);
+}
+
+function showProgramInput() {
+  if (!interpreterState?.pendingInput) return;
+  const field = document.querySelector('#inlineProgramInput');
+  if (field) field.focus();
+}
+
+function renderInlineInput() {
+  if (!interpreterState?.pendingInput) return '';
+  const { name } = interpreterState.pendingInput;
+  const baseName = name.match(/^[A-Za-z_]\w*/)?.[0] || name;
+  const baseValue = interpreterState.vars[Object.keys(interpreterState.vars).find(k => k.toUpperCase() === baseName.toUpperCase()) || baseName];
+  const type = baseValue?.__array && name.includes('[') ? baseValue.elementType : (interpreterState.types[baseName] || 'STRING');
+  return `<form id="inlineInputForm" class="inline-input-form" autocomplete="off">
+    <label for="inlineProgramInput">Enter value for ${escapeHtml(name)} (${escapeHtml(type.toUpperCase())}):</label>
+    <input id="inlineProgramInput" name="value" type="text" aria-label="Value for ${escapeHtml(name)}" required spellcheck="false" />
+    <button type="submit">Submit</button>
+    <div id="inlineInputError" class="inline-input-error" role="alert" hidden></div>
+  </form>`;
+}
+
+function handleInlineSubmission(event) {
+  if (event.target.id !== 'inlineInputForm') return;
+  event.preventDefault();
+  const field = document.querySelector('#inlineProgramInput');
+  try {
+    acceptProgramInput(field.value);
+    continueProgram();
+    renderState();
+    if (interpreterState.pendingInput) {
+      setStatus(`Input required for ${interpreterState.pendingInput.name}`);
+      showProgramInput();
+    } else setStatus(interpreterState.error || 'Program completed successfully', Boolean(interpreterState.error));
+  } catch (error) {
+    const message = document.querySelector('#inlineInputError');
+    if (message) { message.textContent = error.message; message.hidden = false; }
+    if (field) { field.focus(); field.select(); }
+  }
+}
+outputTerminal.addEventListener('submit', handleInlineSubmission);
+// Explicitly handle Enter and clicks, including browsers where form submission
+// is not dispatched from an embedded dynamically rendered input.
+outputTerminal.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || event.target.id !== 'inlineProgramInput' || event.isComposing) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const form = event.target.closest('#inlineInputForm');
+  if (form) handleInlineSubmission({target: form, preventDefault() {}});
+}, true);
+outputTerminal.addEventListener('click', (event) => {
+  const button = event.target.closest('#inlineInputForm button[type="submit"]');
+  if (!button) return;
+  event.preventDefault();
+  const form = button.closest('#inlineInputForm');
+  if (form) handleInlineSubmission({target: form, preventDefault() {}});
+});
+
+
+function acceptProgramInput(rawValue) {
+  const { name } = interpreterState.pendingInput;
+  const baseName = name.match(/^[A-Za-z_]\w*/)?.[0] || name;
+  const baseValue = interpreterState.vars[Object.keys(interpreterState.vars).find(k => k.toUpperCase() === baseName.toUpperCase()) || baseName];
+  const type = baseValue?.__array && name.includes('[') ? baseValue.elementType.toUpperCase() : (interpreterState.types[name] || 'STRING').toUpperCase();
+  let value = rawValue;
+  if (type === 'INTEGER') {
+    value = /^[-+]?\d+$/.test(rawValue.trim()) ? Number(rawValue) : NaN;
+    if (!Number.isSafeInteger(value)) throw new Error(`${name} expects an INTEGER`);
+  } else if (type === 'REAL') {
+    value = rawValue.trim() && Number.isFinite(Number(rawValue)) ? Number(rawValue) : NaN;
+    if (!Number.isFinite(value)) throw new Error(`${name} expects a REAL number`);
+  } else if (type === 'BOOLEAN') {
+    const normalized = rawValue.trim().toUpperCase();
+    if (!['TRUE', 'FALSE'].includes(normalized)) throw new Error(`${name} expects TRUE or FALSE`);
+    value = normalized === 'TRUE';
+  }
+  if(name.includes('[')||name.includes('.'))setPath9618(interpreterState,name,value);else interpreterState.vars[name] = validateType(type, value, name);
+  if (!interpreterState.inputHistory) interpreterState.inputHistory = [];
+  interpreterState.inputHistory.push({name, value: rawValue, outputIndex: interpreterState.output.length});
+  interpreterState.pc += 1;
+  interpreterState.pendingInput = null;
+}
+
+function renderState() {
+  updateEditorView();
+  if (!interpreterState || (!interpreterState.output.length && !interpreterState.error && !interpreterState.pendingInput)) {
+    outputTerminal.innerHTML = '<span class="output-placeholder">Run your pseudocode to see the output here.</span>';
+
+  } else {
+    const history = interpreterState.inputHistory || [];
+    let html = '';
+    for (let i = 0; i <= interpreterState.output.length; i++) {
+      for (const item of history.filter(entry => entry.outputIndex === i)) {
+        html += `<div class="input-history-entry"><strong>${escapeHtml(item.name)}</strong><span class="input-value">${escapeHtml(item.value)}</span></div>`;
+      }
+      if (i < interpreterState.output.length) html += `<span class="output-line">${escapeHtml(interpreterState.output[i])}</span>`;
+    }
+    outputTerminal.innerHTML = html;
+    if (interpreterState.pendingInput) outputTerminal.innerHTML += renderInlineInput();
+
+
+  }
+  const status = !interpreterState ? 'READY' : interpreterState.error ? 'ERROR' : interpreterState.done ? 'COMPLETE' : 'RUNNING';
+  programStatus.textContent = status;
+  programStatus.className = `program-status status-${status.toLowerCase()}`;
+  const error = interpreterState?.error;
+  if (error) {
+    const sourceLines = interpreterState.lines || [];
+    const lineNumber = Math.max(1, Math.min(sourceLines.length || 1, (interpreterState.activeLine ?? 0) + 1));
+    const offendingLine = sourceLines[lineNumber - 1] || '';
+    problemsContent.textContent = `Traceback (most recent call last):\n  File "editor.pseudo", line ${lineNumber}\n    ${offendingLine.trim()}\n${interpreterState.errorType || 'RuntimeError'}: ${error}`;
+    problemsContent.classList.add('has-error');
+    problemCount.textContent = '1 error';
+  } else {
+    problemsContent.textContent = 'No problems';
+    problemsContent.classList.remove('has-error');
+    problemCount.textContent = '0 errors';
+  }
+  const entries = interpreterState ? Object.entries(interpreterState.vars) : [];
+  variableList.innerHTML = entries.length ? entries.map(([key, value]) => `<span class="var-chip"><strong>${escapeHtml(key)}</strong> = ${escapeHtml(displayValue(value))}</span>`).join('') : '<span class="var-chip">No values yet</span>';
+  debugHint.textContent = interpreterState?.pendingInput ? `waiting for ${interpreterState.pendingInput.name}` : interpreterState?.done ? (interpreterState.error ? 'execution stopped' : 'program complete') : interpreterState?.steps ? `paused on line ${(interpreterState.activeLine ?? 0) + 1}` : 'run to inspect';
+}
+
+// Compile-time syntax preflight: never execute a program with a known syntax defect.
+// Semantic checks (such as unknown variables) remain runtime checks.
+function preflight9618(source) {
+  const lines = source.split(/\r?\n/);
+  // Gather declared symbols first so forward references in subprograms are not
+  // incorrectly classified as undeclared identifiers during live analysis.
+  const declared = new Map();
+  for (const raw of lines) {
+    const line = raw.trim();
+    const declaration = line.match(/^DECLARE\s+(.+?)\s*:\s*(INTEGER|REAL|BOOLEAN|STRING|CHAR)\s*$/i);
+    if (declaration) for (const name of declaration[1].split(',')) {
+      if (/^[A-Za-z_]\w*$/.test(name.trim())) declared.set(name.trim().toUpperCase(), declaration[2].toUpperCase());
+    }
+    const constant = line.match(/^CONSTANT\s+([A-Za-z_]\w*)\s*(?:=|<-|<--)\s*/i);
+    if (constant) declared.set(constant[1].toUpperCase(), 'CONSTANT');
+    const loop = line.match(/^FOR\s+([A-Za-z_]\w*)\s*(?:<-|<--|←)/i);
+    if (loop) declared.set(loop[1].toUpperCase(), 'INTEGER');
+    const header = line.match(/^(?:(?:PUBLIC|PRIVATE)\s+)?(?:FUNCTION|PROCEDURE)\s+[A-Za-z_]\w*\s*\((.*)\)/i);
+    if (header) for (const parameter of header[1].split(',')) {
+      const m = parameter.trim().match(/^(?:BYREF|BYVAL)?\s*([A-Za-z_]\w*)\s*:/i);
+      if (m) declared.set(m[1].toUpperCase(), 'PARAMETER');
+    }
+  }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || line.startsWith('//')) continue;
+    const fail = message => { const error = new Error(message); error.sourceLine = i; error.name = 'SyntaxError'; throw error; };
+    if (/^OUTPUT(?:\s|$)/i.test(line)) {
+      const rest = line.slice(6).trim();
+      if (!rest) fail('Unexpected end of statement after OUTPUT; expected an expression');
+      if (rest.startsWith(',') || rest.endsWith(',')) fail('Unexpected comma in OUTPUT expression list');
+    }
+    if (/^INPUT(?:\s|$)/i.test(line) && !line.slice(5).trim()) fail('INPUT requires a target');
+    if (/^IF(?:\s|$)/i.test(line) && !/^IF\s+.+\s+THEN$/i.test(line)) fail('IF requires a condition followed by THEN');
+    if (/^WHILE(?:\s|$)/i.test(line) && !line.slice(5).trim().replace(/\s+DO$/i, '').trim()) fail('WHILE requires a condition');
+    if (/^UNTIL(?:\s|$)/i.test(line) && !line.slice(5).trim()) fail('UNTIL requires a condition');
+    if (/^RETURN(?:\s|$)/i.test(line) && !line.slice(6).trim()) fail('RETURN requires an expression');
+    if (/^DECLARE(?:\s|$)/i.test(line) && !/^DECLARE\s+[A-Za-z_]\w*(?:\s*,\s*[A-Za-z_]\w*)*\s*:\s*(?:ARRAY\s*\[[^\]]+\]\s+OF\s+\w+|\w+)$/i.test(line)) fail('Invalid DECLARE syntax');
+    if (/^CONSTANT(?:\s|$)/i.test(line) && !line.slice(8).trim()) fail('CONSTANT requires an identifier and value');
+    if (/^(?:[A-Za-z_]\w*(?:\[[^\]]+\]|\.[A-Za-z_]\w*)*)\s*(?:<--|<-|←)\s*$/i.test(line)) fail('Unexpected end of statement after assignment; expected an expression');
+    // A lone identifier on the right-hand side is statically resolvable.
+    // This catches misspelled Boolean constants (FALS, TRU) and undeclared
+    // variables immediately, without running any student instructions.
+    const assignment = line.match(/^([A-Za-z_]\w*)\s*(?:<--|<-|←)\s*([A-Za-z_]\w*)\s*$/i);
+    if (assignment) {
+      const lhs = assignment[1].toUpperCase();
+      const rhs = assignment[2].toUpperCase();
+      if (rhs !== 'TRUE' && rhs !== 'FALSE' && !declared.has(rhs)) {
+        const error = new Error(`Variable '${assignment[2]}' is not declared when accessing`);
+        error.sourceLine = i;
+        error.name = 'NameError';
+        throw error;
+      }
+      if (declared.get(lhs) === 'BOOLEAN' && rhs !== 'TRUE' && rhs !== 'FALSE' && declared.has(rhs) && !['BOOLEAN','PARAMETER','CONSTANT'].includes(declared.get(rhs))) {
+        const error = new Error(`Cannot assign ${declared.get(rhs)} to BOOLEAN variable ${assignment[1]}`);
+        error.sourceLine = i;
+        error.name = 'TypeError';
+        throw error;
+      }
+    }
+    // Check unambiguous literal assignments before execution.
+    const literal = line.match(/^([A-Za-z_]\w*)\s*(?:<--|<-|←)\s*(-?\d+(?:\.\d+)?|TRUE|FALSE|"[^"]*"|'[^']*')\s*$/i);
+    if (literal && declared.has(literal[1].toUpperCase())) {
+      const type = declared.get(literal[1].toUpperCase());
+      const value = literal[2];
+      const actual = /^(?:TRUE|FALSE)$/i.test(value) ? 'BOOLEAN' : /^['"]/.test(value) ? 'STRING' : /^-?\d+\.\d+$/.test(value) ? 'REAL' : 'INTEGER';
+      if (['INTEGER','REAL','BOOLEAN','STRING','CHAR'].includes(type) && !(type === actual || (type === 'REAL' && actual === 'INTEGER') || (type === 'CHAR' && actual === 'STRING' && value.length === 3))) {
+        const error = new Error(`Cannot assign ${actual} to ${type} variable ${literal[1]}`);
+        error.sourceLine = i;
+        error.name = 'TypeError';
+        throw error;
+      }
+    }
+    // Detect unbalanced delimiters in each complete pseudocode statement.
+    // Ignore delimiters within quoted literals and trailing comments.
+    // This catches incomplete NEW constructor calls during live analysis.
+    {
+      const opened = [];
+      let quoted = null, escapedChar = false;
+      for (let col = 0; col < line.length; col++) {
+        const ch = line[col];
+        if (quoted) {
+          if (escapedChar) { escapedChar = false; continue; }
+          if (ch === "\\") { escapedChar = true; continue; }
+          if (ch === quoted) quoted = null;
+          continue;
+        }
+        if (ch === '"' || ch === "'") { quoted = ch; continue; }
+        if (ch === '/' && line[col + 1] === '/') break;
+        if (ch === '(' || ch === '[') opened.push({ch, col});
+        if (ch === ')' || ch === ']') {
+          const prior = opened.pop();
+          if (!prior || (prior.ch === '(' ? ')' : ']') !== ch)
+            fail(`Unexpected '${ch}'; mismatched or extra closing delimiter`);
+        }
+      }
+      if (opened.length) {
+        const prior = opened[opened.length - 1];
+        fail(`Expected '${prior.ch === '(' ? ')' : ']'}' to close ${prior.ch === '(' ? 'parenthesis' : 'array index'}`);
+      }
+    }
+    // Detect unterminated quoted strings without evaluating any program code.
+    let quote = null, escaped = false;
+    for (const ch of line) {
+      if (escaped) { escaped = false; continue; }
+      if (quote && ch === '\\') { escaped = true; continue; }
+      if (quote && ch === quote) quote = null;
+      else if (!quote && (ch === '"' || ch === "'")) quote = ch;
+    }
+    if (quote) fail('Unterminated string literal');
+  }
+}
+// Non-executing semantic diagnostics. The analysis is conservative: unresolved
+// dynamic values are checked at runtime rather than guessed at edit time.
+function semanticPreflight9618(source) {
+  const lines = source.split(/\r?\n/);
+  const inClass=[];let classDepth=0;
+  for(let i=0;i<lines.length;i++){const t=lines[i].trim();if(/^CLASS\s+/i.test(t))classDepth++;inClass[i]=classDepth>0;if(/^ENDCLASS$/i.test(t))classDepth=Math.max(0,classDepth-1);}
+  const scopes = [{start:0,end:lines.length, symbols:new Map(), kind:'GLOBAL'}];
+  const fail = (line, kind, message) => {const e=new Error(message);e.sourceLine=line;e.name=kind;throw e;};
+  const functions = new Map();
+  let active=null;
+  for(let i=0;i<lines.length;i++) {
+    const t=lines[i].trim();if(inClass[i])continue;
+    const h=t.match(/^(FUNCTION|PROCEDURE)\s+([A-Za-z]\w*)\s*\((.*)\)(?:\s+RETURNS\s+([A-Za-z]\w*))?$/i);
+    if(h){
+      if(active)continue; // class methods are handled by the runtime's own block parser
+      const params=splitTopLevel(h[3]).filter(Boolean);
+      if(functions.has(h[2].toUpperCase()))fail(i,'NameError',`Duplicate subprogram ${h[2]}`);
+      const local={start:i+1,end:lines.length,symbols:new Map(),kind:h[1].toUpperCase(),name:h[2]};
+      params.forEach(param=>{const m=param.match(/^(?:(?:BYREF|BYVAL)\s+)?([A-Za-z]\w*)\s*:\s*(.+)$/i);if(m)local.symbols.set(m[1].toUpperCase(),m[2].toUpperCase());});
+      functions.set(h[2].toUpperCase(),{arity:params.length,kind:local.kind});scopes.push(local);active=local;
+    } else if(active && new RegExp('^END'+active.kind+'$','i').test(t)){active.end=i;active=null;}
+  }
+  const declaration=/^DECLARE\s+(.+?)\s*:\s*(.+)$/i;
+  for(let i=0;i<lines.length;i++){
+    const t=lines[i].trim(),m=t.match(declaration);if(inClass[i])continue;
+    if(!m)continue;
+    const scope=scopes.findLast(x=>i>=x.start&&i<x.end)||scopes[0];
+    for(const raw of m[1].split(',')){
+      const name=raw.trim().toUpperCase();
+      if(!/^[A-Z]\w*$/.test(name))continue;
+      if(scope.symbols.has(name))fail(i,'NameError',`Duplicate declaration of ${raw.trim()}`);
+      scope.symbols.set(name,m[2].toUpperCase());
+    }
+  }
+  for(let i=0;i<lines.length;i++){
+    if(inClass[i])continue;
+    const loop=lines[i].trim().match(/^FOR\s+([A-Za-z]\w*)\s*(?:<--|<-|←)/i);
+    if(loop){const scope=scopes.findLast(x=>i>=x.start&&i<x.end)||scopes[0];if(!scope.symbols.has(loop[1].toUpperCase()))scope.symbols.set(loop[1].toUpperCase(),'INTEGER');}
+    const constant=lines[i].trim().match(/^CONSTANT\s+([A-Za-z]\w*)\s*(?:=|<--|<-|←)/i);
+    if(constant)scopes[0].symbols.set(constant[1].toUpperCase(),'CONSTANT');
+  }
+  // Global declarations should remain visible inside functions; locals shadow globals.
+  const typeAt=(i,name)=>{const scope=scopes.findLast(x=>i>=x.start&&i<x.end);return scope?.symbols.get(name.toUpperCase())||scopes[0].symbols.get(name.toUpperCase());};
+  const builtin=new Set(['INT','REAL','STRING','ROUND','LENGTH','MID','SUBSTRING','UCASE','LCASE','LEFT','RIGHT','RAND','NUM_TO_STR','STR_TO_NUM','ASC','CHR','EOF']);
+  const reserved=new Set(['TRUE','FALSE','AND','OR','NOT','MOD','DIV']);
+  function scanExpression(expr,i){
+    let tokens;
+    try{tokens=tokenizeExpression(expr);}catch(e){fail(i,'SyntaxError',e.message);}
+    const stack=[];
+    for(let k=0;k<tokens.length;k++){
+      const t=tokens[k],n=tokens[k+1];
+      if(t.value==='('||t.value==='[')stack.push(t.value);
+      if(t.value===')'||t.value===']'){
+        if(stack.pop()!==(t.value===')'?'(': '['))fail(i,'SyntaxError',`Unmatched ${t.value}`);
+      }
+      if(t.type!=='word'||reserved.has(t.value))continue;
+      if(n?.value==='('){
+        if(!builtin.has(t.value)&&!functions.has(t.value)&&!(k>0&&tokens[k-1].value==='.'))fail(i,'NameError',`Unknown function ${t.raw}`);
+        if(functions.has(t.value)){
+          let depth=0,count=0,nonempty=false;
+          for(let j=k+2;j<tokens.length;j++){
+            if(tokens[j].value===')'&&depth===0){count=nonempty?count+1:0;break;}
+            if(tokens[j].value==='('||tokens[j].value==='[')depth++;
+            if(tokens[j].value===')'||tokens[j].value===']')depth--;
+            if(tokens[j].value===','&&depth===0)count++;
+            else nonempty=true;
+          }
+          if(count!==functions.get(t.value).arity)fail(i,'TypeError',`${t.raw} expects ${functions.get(t.value).arity} arguments, got ${count}`);
+          if(functions.get(t.value).kind==='PROCEDURE')fail(i,'TypeError',`Procedure ${t.raw} cannot be used as a value`);
+        }
+      }else if(k>0&&tokens[k-1].value==='.')continue;
+      else if(!typeAt(i,t.raw)&&!functions.has(t.value))fail(i,'NameError',`Variable '${t.raw}' is not declared when accessing`);
+    }
+    if(stack.length)fail(i,'SyntaxError','Unclosed expression delimiter');
+    const significant=tokens.filter(x=>x.type!=='eof');
+    if(significant.length&&['+','-','*','/','DIV','MOD','AND','OR','&','=','<','>','<=','>=','<>'].includes(significant.at(-1).value))fail(i,'SyntaxError','Incomplete expression');
+  }
+  for(let i=0;i<lines.length;i++){
+    const t=lines[i].trim();if(inClass[i]||!t||t.startsWith('//'))continue;
+    const assign=t.match(/^([A-Za-z]\w*)\s*(?:<--|<-|←)\s*(.+)$/);
+    if(assign){
+      const type=typeAt(i,assign[1]);if(!type)fail(i,'NameError',`Variable '${assign[1]}' is not declared`);
+      if(/^NEW\s+[A-Za-z]\w*\s*\(/i.test(assign[2]))continue;
+      scanExpression(assign[2],i);
+      if(/^(INTEGER|REAL|BOOLEAN|STRING|CHAR)$/i.test(type)){
+        const rhs=assign[2].trim();const rhsType=/^(TRUE|FALSE)$/i.test(rhs)?'BOOLEAN':/^-?\d+\.\d+$/.test(rhs)?'REAL':/^-?\d+$/.test(rhs)?'INTEGER':/^(['"]).*\1$/.test(rhs)?'STRING':typeAt(i,rhs);
+        if(rhsType && rhsType!==type && !(type==='REAL'&&rhsType==='INTEGER')&&!(type==='CHAR'&&rhsType==='STRING'&&rhs.length===3))fail(i,'TypeError',`Cannot assign ${rhsType} to ${type} variable ${assign[1]}`);
+      }
+      continue;
+    }
+    const condition=t.match(/^IF\s+(.+)\s+THEN$/i)||t.match(/^WHILE\s+(.+?)(?:\s+DO)?$/i)||t.match(/^UNTIL\s+(.+)$/i);
+    if(condition){scanExpression(condition[1],i);continue;}
+    const out=t.match(/^OUTPUT\s+(.+)$/i);
+    if(out){for(const part of splitTopLevel(out[1]))scanExpression(part,i);continue;}
+    const ret=t.match(/^RETURN\s+(.+)$/i);if(ret){scanExpression(ret[1],i);continue;}
+    const call=t.match(/^CALL\s+([A-Za-z]\w*)\s*\((.*)\)$/i);
+    if(call){const f=functions.get(call[1].toUpperCase());if(f){const args=splitTopLevel(call[2]).filter(Boolean);if(args.length!==f.arity)fail(i,'TypeError',`${call[1]} expects ${f.arity} arguments, got ${args.length}`);for(const arg of args)scanExpression(arg,i);}continue;}
+    const index=t.match(/^([A-Za-z]\w*)\s*\[([^\]]+)\]/);
+    if(index){const ty=typeAt(i,index[1]);if(ty&&/^ARRAY\s*\[/.test(ty)){const b=ty.match(/^ARRAY\s*\[([^\]]+)\]/);if(b){const ranges=splitTopLevel(b[1]).map(x=>x.split(':').map(Number));const indices=splitTopLevel(index[2]);indices.forEach((x,j)=>{if(/^-?\d+$/.test(x.trim())&&ranges[j]&&(Number(x)<ranges[j][0]||Number(x)>ranges[j][1]))fail(i,'IndexError',`Array index ${x} outside [${ranges[j].join(':')}]`);});}}}
+  }
+}
+// Static parser: checks the complete expression grammar without evaluating student code.
+function parseExpressionSyntax9618(source, line) {
+  const error = msg => { const e = new Error(msg); e.name='SyntaxError'; e.sourceLine=line; throw e; };
+  let tokens;
+  try { tokens=tokenizeExpression(source); } catch(e) { error(e.message); }
+  let pos=0;
+  const at=()=>tokens[pos]?.value;
+  const eat=x=>{if(at()===x){pos++;return true;}return false;};
+  const need=x=>{if(!eat(x))error(`Expected ${x}, got ${at()||'end of expression'}`);};
+  const primary=()=>{
+    const t=tokens[pos];
+    if(!t||t.type==='eof')error('Expected expression');
+    if(['NOT','-','+','^'].includes(t.value)){pos++;primary();return;}
+    if(eat('(')){expression(0);need(')');}
+    else if(['number','string','word'].includes(t.type)){pos++;}
+    else error(`Unexpected token ${t.raw||t.value}`);
+    while(true){
+      if(eat('(')){if(!eat(')')){do{expression(0);}while(eat(','));need(')');}}
+      else if(eat('[')){expression(0);while(eat(','))expression(0);need(']');}
+      else if(eat('.')){if(tokens[pos]?.type!=='word')error('Expected field or method name');pos++;}
+      else if(eat('^'))continue;
+      else break;
+    }
+  };
+  const precedence={'OR':1,'AND':2,'=':3,'<>':3,'<':3,'>':3,'<=':3,'>=':3,'&':4,'+':4,'-':4,'*':5,'/':5,'DIV':5,'MOD':5};
+  function expression(min){primary();while(precedence[at()]!==undefined&&precedence[at()]>=min){const op=at();pos++;expression(precedence[op]+1);}}
+  expression(0);
+  if(tokens[pos]?.type!=='eof')error(`Unexpected token ${tokens[pos]?.raw||at()}`);
+}
+// Structural validation is independent of the interpreter's execution path.
+function structuralPreflight9618(source) {
+  const lines=source.split(/\r?\n/), stack=[];
+  const fail=(i,message)=>{const e=new Error(message);e.name='SyntaxError';e.sourceLine=i;throw e;};
+  const push=(kind,i)=>stack.push({kind,line:i,elseSeen:false});
+  const top=()=>stack.at(-1);
+  const close=(kind,i)=>{if(top()?.kind!==kind)fail(i,`Unexpected END${kind}; expected ${top()? 'end of '+top().kind : 'an opening '+kind}`);stack.pop();};
+  for(let i=0;i<lines.length;i++){
+    const t=lines[i].trim();if(!t||t.startsWith('//'))continue;
+    let m;
+    if((m=t.match(/^IF\s+(.+)\s+THEN$/i))){parseExpressionSyntax9618(m[1],i);push('IF',i);continue;}
+    if(/^ELSE$/i.test(t)){if(top()?.kind!=='IF'||top().elseSeen)fail(i,'ELSE without a matching IF or duplicate ELSE');top().elseSeen=true;continue;}
+    if(/^ENDIF$/i.test(t)){close('IF',i);continue;}
+    if(/^CONTINUE$/i.test(t)){if(!stack.some(frame=>['FOR','WHILE','REPEAT'].includes(frame.kind)))fail(i,'CONTINUE is only permitted inside a loop');continue;}
+    if(/^BREAK$/i.test(t)){if(!stack.some(frame=>['FOR','WHILE','REPEAT'].includes(frame.kind)))fail(i,'BREAK is only permitted inside a loop');continue;}
+    if((m=t.match(/^WHILE\s+(.+?)(?:\s+DO)?$/i))){parseExpressionSyntax9618(m[1],i);push('WHILE',i);continue;}
+    if(/^ENDWHILE$/i.test(t)){close('WHILE',i);continue;}
+    if(/^REPEAT$/i.test(t)){push('REPEAT',i);continue;}
+    if((m=t.match(/^UNTIL\s+(.+)$/i))){if(top()?.kind!=='REPEAT')fail(i,'UNTIL without matching REPEAT');parseExpressionSyntax9618(m[1],i);stack.pop();continue;}
+    if((m=t.match(/^FOR\s+([A-Za-z]\w*)\s*(?:<--|<-|←)\s*(.+?)\s+TO\s+(.+?)(?:\s+STEP\s+(.+))?$/i))){parseExpressionSyntax9618(m[2],i);parseExpressionSyntax9618(m[3],i);if(m[4])parseExpressionSyntax9618(m[4],i);stack.push({kind:'FOR',line:i,name:m[1].toUpperCase()});continue;}
+    if((m=t.match(/^NEXT\s+([A-Za-z]\w*)$/i))){if(top()?.kind!=='FOR'||top().name!==m[1].toUpperCase())fail(i,`NEXT ${m[1]} does not match its FOR loop`);stack.pop();continue;}
+    if(/^CASE\s+OF\s+.+$/i.test(t)){push('CASE',i);continue;}
+    if(/^ENDCASE$/i.test(t)){close('CASE',i);continue;}
+    if(/^TYPE\s+\w+\s*=/.test(t))continue;
+    if(/^TYPE\s+\w+$/i.test(t)){push('TYPE',i);continue;}
+    if(/^ENDTYPE$/i.test(t)){close('TYPE',i);continue;}
+    if(/^CLASS\s+\w+/.test(t)){push('CLASS',i);continue;}
+    if(/^ENDCLASS$/i.test(t)){close('CLASS',i);continue;}
+    if((m=t.match(/^(?:(?:PUBLIC|PRIVATE)\s+)?(FUNCTION|PROCEDURE)\s+\w+\s*\(.*\)(?:\s+RETURNS\s+\w+)?$/i))){push(m[1].toUpperCase(),i);continue;}
+    if(/^ENDFUNCTION$/i.test(t)){close('FUNCTION',i);continue;}
+    if(/^ENDPROCEDURE$/i.test(t)){close('PROCEDURE',i);continue;}
+    if((m=t.match(/^OUTPUT\s+(.+)$/i))){for(const x of splitTopLevel(m[1]))parseExpressionSyntax9618(x,i);continue;}
+    if((m=t.match(/^RETURN\s+(.+)$/i))){parseExpressionSyntax9618(m[1],i);continue;}
+    if((m=t.match(/^([A-Za-z]\w*(?:\[[^\]]+\]|\.[A-Za-z]\w*|\^)*?)\s*(?:<--|<-|←)\s*(.+)$/i))){if(!/^NEW\s+[A-Za-z]\w*\s*\(/i.test(m[2]))parseExpressionSyntax9618(m[2],i);continue;}
+  }
+  if(stack.length)fail(stack.at(-1).line,`Missing terminator for ${stack.at(-1).kind} block`);
+}
+// Normalize typographic quotes only for parsing; the editor retains the source verbatim.
+function normalizeSourceQuotes9618(source) {
+  return source.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+}
+function createValidatedState9618(source) {
+  const originalSource = source;
+  source = normalizeSourceQuotes9618(source);
+  preflight9618(source);
+  semanticPreflight9618(source);
+  structuralPreflight9618(source);
+  const state = createState(source.replace(/<--/g, '<-')); state.source = originalSource; return state;
+}
+function showCompileError9618(error) {
+  const lines = codeInput.value.split(/\r?\n/);
+  const match = String(error.message).match(/(?:on|at) line (\d+)/i);
+  const line = Number.isInteger(error.sourceLine) ? error.sourceLine : match ? Number(match[1]) - 1 : 0;
+  interpreterState = { source:codeInput.value, lines, activeLine:Math.max(0,line), vars:{}, output:[], done:true, error:error.message, errorType:error.name || 'SyntaxError' };
+  renderState();
+  setStatus(error.message,true);
+}
+function runProgram() {
+  clearTimeout(liveDiagnosticTimer);
+  try { interpreterState = createValidatedState9618(codeInput.value); } catch (error) { showCompileError9618(error); return; }
+  continueProgram();
+  renderState();
+  if (interpreterState.pendingInput) { setStatus(`Input required for ${interpreterState.pendingInput.name}`); showProgramInput(); }
+  else setStatus(interpreterState.error || 'Program completed successfully', Boolean(interpreterState.error));
+}
+
+function stepProgram() {
+  clearTimeout(liveDiagnosticTimer);
+  if (!interpreterState || interpreterState.source !== codeInput.value || interpreterState.done) {
+    try { interpreterState = createValidatedState9618(codeInput.value); } catch (error) { showCompileError9618(error); return; }
+  }
+  if (!interpreterState.pendingInput) executeInstruction(interpreterState);
+  if (!interpreterState.error && !interpreterState.pendingInput && interpreterState.pc >= interpreterState.lines.length) interpreterState.done = true;
+  renderState();
+  if (interpreterState.error) setStatus(interpreterState.error, true);
+  else if (interpreterState.pendingInput) { setStatus(`Input required for ${interpreterState.pendingInput.name}`); showProgramInput(); }
+  else if (interpreterState.done) setStatus('Program completed successfully');
+  else setStatus(`Paused on line ${interpreterState.activeLine + 1}`);
+}
+
+function resetProgram() {
+  codeInput.value = starterCode;
+  clearTimeout(liveDiagnosticTimer);
+  interpreterState = null;
+  setStatus('Ready when you are');
+  renderState();
+  codeInput.focus();
+}
+
+// Live diagnostics are static-only: never run the student's program while typing.
+let liveDiagnosticTimer = null;
+function checkLiveSyntax9618() {
+  liveDiagnosticTimer = null;
+  try {
+    preflight9618(normalizeSourceQuotes9618(codeInput.value));
+    semanticPreflight9618(normalizeSourceQuotes9618(codeInput.value));
+    structuralPreflight9618(codeInput.value);
+    if (!interpreterState || interpreterState.source !== codeInput.value) {
+      interpreterState = null;
+      renderState();
+    }
+    setStatus('Unsaved changes');
+  } catch (error) {
+    // The compiler owns these diagnostics. Runtime failures are reported only by Run/Step.
+    showCompileError9618(error);
+  }
+}
+function scheduleLiveSyntax9618() {
+  clearTimeout(liveDiagnosticTimer);
+  interpreterState = null;
+  updateEditorView();
+  renderState();
+  setStatus('Checking syntax...');
+  liveDiagnosticTimer = setTimeout(checkLiveSyntax9618, 280);
+}
+codeInput.addEventListener('input', scheduleLiveSyntax9618);
+codeInput.addEventListener('scroll', syncEditorScroll);
+codeInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Tab') { event.preventDefault(); const start = codeInput.selectionStart; codeInput.value = `${codeInput.value.slice(0, start)}  ${codeInput.value.slice(codeInput.selectionEnd)}`; codeInput.selectionStart = codeInput.selectionEnd = start + 2; codeInput.dispatchEvent(new Event('input')); }
+  if (event.shiftKey && event.key === 'Enter') { event.preventDefault(); runProgram(); }
+});
+
+const fileNameInput = document.querySelector('#programFileName');
+function safeFileName() { return (fileNameInput.value.trim().replace(/[^A-Za-z0-9_.-]/g,'_').replace(/\.txt$/i,'') || 'index'); }
+document.querySelector('#saveTxtBtn').addEventListener('click', () => {
+  const blob = new Blob([codeInput.value], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a'); link.href=url; link.download=safeFileName()+'.txt';
+  document.body.appendChild(link); link.click(); link.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+  setStatus('Saved '+safeFileName()+'.txt');
+});
+document.querySelector('#importTxtBtn').addEventListener('click',()=>document.querySelector('#importTxtInput').click());
+document.querySelector('#importTxtInput').addEventListener('change',async event=>{
+  const file=event.target.files?.[0]; if(!file)return;
+  codeInput.value=await file.text(); fileNameInput.value=file.name.replace(/\.txt$/i,'');
+  interpreterState=null; updateEditorView();renderState();scheduleLiveSyntax9618();setStatus('Imported '+file.name);event.target.value='';
+});
+
+document.querySelector('#runBtn').addEventListener('click', runProgram);
+const resetDialog = document.querySelector('#resetDialog');
+const resetNoPrompt = document.querySelector('#resetNoPrompt');
+const resetPreferenceKey = 'utc2852.skipResetConfirmation';
+function skipResetConfirmation() {
+  try { return localStorage.getItem(resetPreferenceKey) === 'true'; } catch { return false; }
+}
+document.querySelector('#resetBtn').addEventListener('click', () => {
+  if (skipResetConfirmation()) { resetProgram(); return; }
+  resetNoPrompt.checked = false;
+  resetDialog.showModal();
+});
+document.querySelector('#resetCancel').addEventListener('click', () => resetDialog.close());
+document.querySelector('#resetConfirm').addEventListener('click', () => {
+  if (resetNoPrompt.checked) {
+    try { localStorage.setItem(resetPreferenceKey, 'true'); } catch { /* storage unavailable: confirmation remains enabled */ }
+  }
+  resetDialog.close();
+  resetProgram();
+});
+function syncFullscreenState() {
+  const isFullscreen = Boolean(document.fullscreenElement) || editorShell.classList.contains('fullscreen');
+  editorShell.classList.toggle('fullscreen', isFullscreen);
+  document.body.classList.toggle('editor-fullscreen', isFullscreen);
+  fullscreenBtn.title = isFullscreen ? 'Exit fullscreen' : 'Open editor fullscreen';
+  fullscreenBtn.setAttribute('aria-label', fullscreenBtn.title);
+  fullscreenBtn.querySelector('.fullscreen-label').textContent = isFullscreen ? 'Exit' : 'Fullscreen';
+  window.setTimeout(syncEditorScroll, 0);
+}
+fullscreenBtn.addEventListener('click', async () => {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen?.();
+  } else if (editorShell.requestFullscreen) {
+    try { await editorShell.requestFullscreen(); } catch { editorShell.classList.toggle('fullscreen'); syncFullscreenState(); }
+  } else {
+    editorShell.classList.toggle('fullscreen');
+    syncFullscreenState();
+  }
+});
+document.addEventListener('fullscreenchange', syncFullscreenState);
+
+
+updateEditorView();
+renderState();
+
+</script>
+</body>
+</html>

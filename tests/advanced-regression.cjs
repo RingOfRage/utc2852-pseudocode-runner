@@ -1,0 +1,6 @@
+const fs=require('fs'),vm=require('vm');const h=fs.readFileSync(__dirname+'/index.html','utf8');const js=h.match(/<script>([\s\S]*?)<\/script>/)[1];vm.runInThisContext(js.slice(js.indexOf('function splitTopLevel('),js.indexOf('function continueProgram() {')));function run(src){const s=createState(src);for(let i=0;i<1000&&!s.done&&!s.pendingInput;i++)executeInstruction(s);return s;}
+const tests=[
+['private denied',`CLASS Pet\n PRIVATE Name : STRING\n PUBLIC PROCEDURE NEW(N : STRING)\n Name ← N\n ENDPROCEDURE\nENDCLASS\nP ← NEW Pet("Cat")\nOUTPUT P.Name`,null,'Private field'],
+['method expression',`CLASS Counter\n PRIVATE N : INTEGER\n PUBLIC PROCEDURE NEW(X : INTEGER)\n N ← X\n ENDPROCEDURE\n PUBLIC FUNCTION Get() RETURNS INTEGER\n RETURN N\n ENDFUNCTION\nENDCLASS\nC ← NEW Counter(7)\nOUTPUT C.Get() + 2`,'9'],
+['recursive function',`FUNCTION Fact(N : INTEGER) RETURNS INTEGER\n IF N <= 1 THEN\n RETURN 1\n ELSE\n RETURN N * Fact(N - 1)\n ENDIF\nENDFUNCTION\nOUTPUT Fact(5)`,'120']
+];let failed=0;for(const [name,code,expected,error] of tests){const s=run(code);const ok=error?s.error?.includes(error):s.output.join('')===expected&&!s.error;console.log(name,ok?'PASS':'FAIL',s.output.join(''),s.error||'');if(!ok)failed++;}process.exitCode=failed?1:0;

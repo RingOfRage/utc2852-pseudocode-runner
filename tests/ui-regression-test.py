@@ -1,0 +1,21 @@
+from playwright.sync_api import sync_playwright
+from pathlib import Path
+with sync_playwright() as p:
+ b=p.chromium.launch(headless=True, executable_path='/usr/bin/chromium', args=['--no-sandbox'])
+ page=b.new_page()
+ page.on('pageerror',lambda e: print('PAGEERROR',e))
+ page.set_content(Path('/mnt/data/pseudorun-prototype/index.html').read_text(), wait_until='load')
+ page.locator('#codeInput').fill('DECLARE score : INTEGER\nOUTPUT "Enter your score:"\nINPUT score\nIF score >= 60 THEN\n OUTPUT "Grade: C"\nELSE\n OUTPUT "Grade: D"\nENDIF')
+ page.locator('#runBtn').click()
+ print('status after run',page.locator('#programStatus').inner_text())
+ page.locator('#inlineProgramInput').fill('12')
+ page.locator('#inlineInputForm button').click()
+ print('status after submit',page.locator('#programStatus').inner_text())
+ print('output',page.locator('#outputTerminal').inner_text())
+ print('problems',page.locator('#problemsContent').inner_text())
+ page.locator('#codeInput').fill('DECLARE score : INTEGER\nOUTPUT missingVar')
+ page.locator('#runBtn').click()
+ print('error status',page.locator('#programStatus').inner_text())
+ print('error pane',page.locator('#problemsContent').inner_text())
+ page.screenshot(path='/mnt/data/pseudorun-debug-test.png')
+ b.close()

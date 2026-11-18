@@ -421,6 +421,65 @@ html, body { height: 100%; }
 .credits-dialog .credits-close:hover { background: #10646a; border-color: #10646a; }
 .credits-dialog .credits-close:focus-visible { outline: 3px solid #83c9ca; outline-offset: 2px; }
 @media (max-width: 700px) { .editor-section { padding-top: 6px; } .credits-footer { padding: 7px 12px 9px; font-size: 11px; } }
+
+/* Keep the output transcript independently scrollable, without moving inspectors. */
+.editor-grid .output-side {
+  display: grid;
+  grid-template-rows: 44px minmax(0, 5.5fr) minmax(0, 2.5fr) minmax(0, 2fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.editor-grid .output-side > .output-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: auto;
+  overflow: hidden;
+  padding: 14px 16px;
+}
+.editor-grid .output-side .output-terminal {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.editor-grid .output-side > .variables,
+.editor-grid .output-side > .problems-panel {
+  min-height: 0;
+  overflow: hidden;
+}
+.editor-grid .output-side > .variables .variable-list,
+.editor-grid .output-side .problems-content {
+  min-height: 0;
+  overflow-y: auto;
+}
+@media (max-width:700px) {
+  .editor-grid .output-side { height: 394px; min-height: 394px; }
+}
+
+/* UTC2852: independently scrolling editor, fixed-height workspace. */
+html, body { height: 100%; }
+.site-shell { height: 100dvh; min-height: 0; overflow: hidden; }
+.site-shell > main, .editor-section, .editor-section > .container,
+.editor-shell, .editor-grid, .code-side, .editor-canvas { min-height: 0; }
+.editor-section { min-height: 0; }
+.editor-grid { height: 100%; overflow: hidden; }
+.editor-grid .code-side { display: flex; flex-direction: column; overflow: hidden; }
+.editor-grid .code-head { flex: 0 0 44px; }
+.editor-grid .code-body { flex: 1 1 0; height: auto; min-height: 0; overflow: hidden; }
+.editor-grid .editor-canvas { height: 100%; min-height: 0; overflow: hidden; }
+.editor-grid .code-input { overflow-x: auto; overflow-y: auto; overscroll-behavior: contain; }
+.editor-grid .highlight-layer { overflow: hidden; }
+.editor-grid .line-numbers { overflow: hidden; }
+.editor-shell.fullscreen .code-body, .editor-shell:fullscreen .code-body { min-height: 0; }
+@media (max-width: 700px) {
+  .editor-grid { min-height: 0; }
+  .editor-grid .code-body { height: auto; min-height: 0; }
+}
 </style>
 </head>
 <body>
@@ -863,7 +922,7 @@ function getIndex9618(a,indices) { if(typeof a==='string'){if(indices.length!==1
 function getPath9618(vars,path,evalFn) { const head=path.match(/^([A-Za-z][\w]*)/); if(!head) throw new Error('Invalid identifier path'); let value=resolve9618(vars,head[1]); let rest=path.slice(head[0].length); while(rest.trim()) {rest=rest.trim(); if(rest[0]==='.') {const m=rest.match(/^\.([A-Za-z]\w*)/); if(!m) throw new Error('Invalid property'); value=resolve9618(value,m[1]); rest=rest.slice(m[0].length);} else if(rest[0]==='[') {const close=rest.indexOf(']'); if(close<0) throw new Error('Missing ]'); const indices=splitTopLevel(rest.slice(1,close)).map(evalFn); value=getIndex9618(value,indices); rest=rest.slice(close+1);} else throw new Error('Invalid access path');} return value; }
 function setPath9618(state,path,value) {const head=path.match(/^([A-Za-z]\w*)/); if(!head) throw new Error('Invalid assignment target'); const name=findKey9618(state.vars,head[1]); if(!name) throw new Error(`Undeclared variable ${head[1]}`); if(state.constants.has(name)) throw new Error(`Cannot assign to constant ${name}`); let rest=path.slice(head[0].length).trim(); if(rest==='^'){const ptr=state.vars[name];if(!ptr?.__pointer||!ptr.target)throw new Error('Unassigned pointer');return setPath9618(state,ptr.target,value);}if(!rest){const ty=state.types[name]; if(ty?.toUpperCase()==='DATE'&&!/^(\d{2})\/(\d{2})\/(\d{4})$/.test(String(value)))throw new Error(name+' requires a DATE');if(ty && ['INTEGER','REAL','STRING','CHAR','BOOLEAN'].includes(ty.toUpperCase())) validateType(ty.toUpperCase(),value,name); if(ty && state.classes?.[ty.toUpperCase()] && (!value?.__class || !classChain9618(state,value.__class).some(c=>c.name.toUpperCase()===ty.toUpperCase())))throw new Error(name+' requires a '+ty+' object'); if(state.vars[name]?.__array && value?.__array) {if(JSON.stringify(state.vars[name].bounds)!==JSON.stringify(value.bounds)||state.vars[name].elementType.toUpperCase()!==value.elementType.toUpperCase()) throw new Error('Incompatible arrays');} state.vars[name]=clone9618(value);return;}
  let obj=state.vars[name]; while(rest) {if(rest[0]==='.') {const m=rest.match(/^\.([A-Za-z]\w*)/);if(!m) throw new Error('Invalid field'); const key=findKey9618(obj,m[1]);if(!key) throw new Error(`Unknown field ${m[1]}`);rest=rest.slice(m[0].length).trim();if(!rest){obj[key]=clone9618(value);return;}obj=obj[key];} else if(rest[0]==='['){const close=rest.indexOf(']');if(close<0)throw new Error('Missing ]');const indices=splitTopLevel(rest.slice(1,close)).map(x=>evaluateExpression(x,state.vars));const key=indexArray9618(obj,indices);rest=rest.slice(close+1).trim();if(!rest){if(['INTEGER','REAL','STRING','BOOLEAN','CHAR'].includes(obj.elementType.toUpperCase()))validateType(obj.elementType.toUpperCase(),value,path);obj.cells.set(key,clone9618(value));return;} if(!obj.cells.has(key))obj.cells.set(key,typeDefault9618(obj.elementType,obj.defs));obj=obj.cells.get(key);}else throw new Error('Invalid target path');}}
-function parseParams9618(s) {if(!s.trim())return [];return splitTopLevel(s).map(x=>{const m=x.match(/^(?:(BYREF|BYVAL)\s+)?([A-Za-z]\w*)\s*:\s*(ARRAY\s+OF\s+\w+|\w+)$/i);if(!m)throw new Error(`Invalid parameter ${x}`);return {byref:(m[1]||'').toUpperCase()==='BYREF',name:m[2],type:m[3]};});}
+function parseParams9618(s) {if(!s.trim())return [];return splitTopLevel(s).map(x=>{const m=x.match(/^(?:(BYREF|BYVAL)\s+)?([A-Za-z]\w*)\s*:\s*(ARRAY\s*(?:\[[^\]]+\]\s*)?OF\s+\w+|\w+)$/i);if(!m)throw new Error(`Invalid parameter ${x}`);return {byref:(m[1]||'').toUpperCase()==='BYREF',name:m[2],type:m[3]};});}
 function parseBlocks9618(s) {const lines=s.lines, defs={},subs={},classes={},skip={},caseMap={};let blocks=[];for(let i=0;i<lines.length;i++){const t=lines[i].trim();let m;
  if((m=t.match(/^TYPE\s+(\w+)\s*=\s*\((.+)\)$/i))){defs[m[1].toUpperCase()]={kind:'enum',values:splitTopLevel(m[2])};skip[i]=i;continue;}
  if((m=t.match(/^TYPE\s+(\w+)\s*=\s*\^(\w+)$/i))){defs[m[1].toUpperCase()]={kind:'pointer',to:m[2]};skip[i]=i;continue;}
@@ -918,7 +977,7 @@ const oldSetPath9618=setPath9618;
 setPath9618=function(s,path,value){const m=path.match(/^([A-Za-z]\w*)\.([A-Za-z]\w*)/);if(m){const key=findKey9618(s.vars,m[1]);if(key!==undefined)memberAccess9618(s,s.vars[key],m[2],'field');}return oldSetPath9618(s,path,value);};
 let active9618=null;
 evaluateExpression=function(source,variables){const p=new ExpressionParser(source,variables);p.context=active9618;return p.parse();};
-function invoke9618(s,name,args,rawArgs){const sub=s.subs[name.toUpperCase()];if(!sub)throw new Error(`Unknown subprogram ${name}`);if(args.length!==sub.params.length)throw new Error(`${name} expects ${sub.params.length} arguments`);if(s.callDepth>50)throw new Error('Maximum call depth exceeded');const caller={pc:s.pc,vars:s.vars,types:s.types,constants:s.constants,loops:s.loops,pendingInput:s.pendingInput,returned:s.returned,returnValue:s.returnValue,done:s.done};s.returned=false;s.returnValue=undefined;const locals=Object.create(null);const refs=[];sub.params.forEach((p,i)=>{locals[p.name]=p.byref && args[i]?.__array ? args[i] : clone9618(args[i]);if(/^ARRAY\s+OF\s+/i.test(p.type)){if(!args[i]?.__array)throw new Error('Expected array argument for '+p.name);const element=p.type.replace(/^ARRAY\s+OF\s+/i,'').toUpperCase();if(args[i].elementType.toUpperCase()!==element)throw new Error('Array element type mismatch for '+p.name);}else if(['INTEGER','REAL','STRING','CHAR','BOOLEAN'].includes(p.type.toUpperCase()))validateType(p.type.toUpperCase(),args[i],p.name);else if(s.classes?.[p.type.toUpperCase()] && (!args[i]?.__class||!classChain9618(s,args[i].__class).some(c=>c.name.toUpperCase()===p.type.toUpperCase())))throw new Error(p.name+' requires a '+p.type+' object');if(p.byref){if(!rawArgs||!/^[A-Za-z]\w*$/.test(rawArgs[i]))throw new Error('BYREF requires a variable');refs.push([p.name,rawArgs[i]]);}});s.vars=new Proxy(locals,{get(t,k){if(typeof k==='symbol')return t[k];const x=findKey9618(t,k);if(x!==undefined)return t[x];const g=findKey9618(caller.vars,k);return g===undefined?undefined:caller.vars[g];},set(t,k,v){const x=findKey9618(t,k);if(x!==undefined)t[x]=v;else{const g=findKey9618(caller.vars,k);if(g!==undefined)caller.vars[g]=v;else t[k]=v;}return true;},ownKeys(t){return [...new Set([...Reflect.ownKeys(t),...Reflect.ownKeys(caller.vars)])];},getOwnPropertyDescriptor(t,k){return Object.getOwnPropertyDescriptor(t,k)||{configurable:true,enumerable:true,writable:true,value:undefined};}});s.types={...caller.types,...Object.fromEntries(sub.params.map(p=>[p.name,p.type.toUpperCase()]))};s.constants=new Set(caller.constants);s.loops=[];s.pc=sub.start+1;s.callDepth++;let result;try{while(s.pc<sub.end&&!s.error&&!s.pendingInput&&!s.returned){executeInstruction(s);if(s.steps>10000)throw new Error('Execution limit exceeded');}if(s.pendingInput)throw new Error('INPUT within subprogram is not supported during synchronous calls');result=s.returnValue;s.returned=false;s.returnValue=undefined;for(const [p,target] of refs){const key=findKey9618(caller.vars,target);if(key===undefined)throw new Error(`Unknown BYREF variable ${target}`);caller.vars[key]=clone9618(s.vars[p]);}}finally{s.pc=caller.pc;s.vars=caller.vars;s.types=caller.types;s.constants=caller.constants;s.loops=caller.loops;s.pendingInput=caller.pendingInput;s.returned=caller.returned;s.returnValue=caller.returnValue;s.done=caller.done;s.callDepth--;}return result;}
+function invoke9618(s,name,args,rawArgs){const sub=s.subs[name.toUpperCase()];if(!sub)throw new Error(`Unknown subprogram ${name}`);if(args.length!==sub.params.length)throw new Error(`${name} expects ${sub.params.length} arguments`);if(s.callDepth>50)throw new Error('Maximum call depth exceeded');const caller={pc:s.pc,vars:s.vars,types:s.types,constants:s.constants,loops:s.loops,pendingInput:s.pendingInput,returned:s.returned,returnValue:s.returnValue,done:s.done};s.returned=false;s.returnValue=undefined;const locals=Object.create(null);const refs=[];sub.params.forEach((p,i)=>{locals[p.name]=p.byref && args[i]?.__array ? args[i] : clone9618(args[i]);if(/^ARRAY\s*(?:\[[^\]]+\]\s*)?OF\s+/i.test(p.type)){if(!args[i]?.__array)throw new Error('Expected array argument for '+p.name);const element=p.type.replace(/^ARRAY\s*(?:\[[^\]]+\]\s*)?OF\s+/i,'').toUpperCase();if(args[i].elementType.toUpperCase()!==element)throw new Error('Array element type mismatch for '+p.name);const boundSpec=p.type.match(/^ARRAY\s*\[([^\]]+)\]/i);if(boundSpec){const expected=splitTopLevel(boundSpec[1]).map(part=>part.split(':').map(n=>Number(n.trim())));if(expected.some(pair=>pair.length!==2||!pair.every(Number.isInteger)))throw new Error('Invalid array parameter bounds for '+p.name);if(JSON.stringify(args[i].bounds)!==JSON.stringify(expected))throw new Error('Array bounds mismatch for '+p.name);}}else if(['INTEGER','REAL','STRING','CHAR','BOOLEAN'].includes(p.type.toUpperCase()))validateType(p.type.toUpperCase(),args[i],p.name);else if(s.classes?.[p.type.toUpperCase()] && (!args[i]?.__class||!classChain9618(s,args[i].__class).some(c=>c.name.toUpperCase()===p.type.toUpperCase())))throw new Error(p.name+' requires a '+p.type+' object');if(p.byref){if(!rawArgs||!/^[A-Za-z]\w*$/.test(rawArgs[i]))throw new Error('BYREF requires a variable');refs.push([p.name,rawArgs[i]]);}});s.vars=new Proxy(locals,{get(t,k){if(typeof k==='symbol')return t[k];const x=findKey9618(t,k);if(x!==undefined)return t[x];const g=findKey9618(caller.vars,k);return g===undefined?undefined:caller.vars[g];},set(t,k,v){const x=findKey9618(t,k);if(x!==undefined)t[x]=v;else{const g=findKey9618(caller.vars,k);if(g!==undefined)caller.vars[g]=v;else t[k]=v;}return true;},ownKeys(t){return [...new Set([...Reflect.ownKeys(t),...Reflect.ownKeys(caller.vars)])];},getOwnPropertyDescriptor(t,k){return Object.getOwnPropertyDescriptor(t,k)||{configurable:true,enumerable:true,writable:true,value:undefined};}});s.types={...caller.types,...Object.fromEntries(sub.params.map(p=>[p.name,p.type.toUpperCase()]))};s.constants=new Set(caller.constants);s.loops=[];s.pc=sub.start+1;s.callDepth++;let result;try{while(s.pc<sub.end&&!s.error&&!s.pendingInput&&!s.returned){executeInstruction(s);if(s.steps>10000)throw new Error('Execution limit exceeded');}if(s.pendingInput)throw new Error('INPUT within subprogram is not supported during synchronous calls');result=s.returnValue;s.returned=false;s.returnValue=undefined;for(const [p,target] of refs){const key=findKey9618(caller.vars,target);if(key===undefined)throw new Error(`Unknown BYREF variable ${target}`);caller.vars[key]=clone9618(s.vars[p]);}}finally{s.pc=caller.pc;s.vars=caller.vars;s.types=caller.types;s.constants=caller.constants;s.loops=caller.loops;s.pendingInput=caller.pendingInput;s.returned=caller.returned;s.returnValue=caller.returnValue;s.done=caller.done;s.callDepth--;}return result;}
 function newObject9618(s,name,args,skipCtor=false){const c=s.classes[name.toUpperCase()];if(!c)throw new Error(`Unknown class ${name}`);let obj=c.parent?newObject9618(s,c.parent,[],true):{__class:name};for(const [key,type] of c.fields)obj[key]=typeDefault9618(type,s.defs);obj.__class=name;const ctor=c.methods.NEW;if(ctor&&!skipCtor)invokeMethod9618(s,obj,'NEW',args);else if(args.length&&!skipCtor)throw new Error('Constructor arguments supplied without NEW');return obj;}
 function findMethod9618(s,klass,method){let c=s.classes[klass.toUpperCase()];while(c){if(c.methods[method.toUpperCase()])return c.methods[method.toUpperCase()];c=c.parent?s.classes[c.parent.toUpperCase()]:null;}throw new Error(`Unknown method ${method}`);}
 function invokeMethod9618(s,obj,method,args,ownerOverride=null){const sub=findMethod9618(s,ownerOverride||obj.__class,method),old=s.subs[method.toUpperCase()],oldVars=s.vars;const priorObject=s.currentObject,priorClass=s.currentClass;const temp={...s.vars,...obj}, initialFields=Object.fromEntries(Object.keys(obj).map(k=>[k,clone9618(obj[k])]));s.vars=temp;s.currentObject=obj;s.currentClass=ownerOverride||obj.__class;s.subs[method.toUpperCase()]=sub;try{const result=invoke9618(s,method,args,null);for(const k of Object.keys(obj))if(k!=='__class'&&Object.prototype.hasOwnProperty.call(temp,k)&&JSON.stringify(temp[k])!==JSON.stringify(initialFields[k]))obj[k]=temp[k];return result;}finally{s.vars=oldVars;s.currentObject=priorObject;s.currentClass=priorClass;if(old)s.subs[method.toUpperCase()]=old;else delete s.subs[method.toUpperCase()];}}
@@ -988,15 +1047,31 @@ function showProgramInput() {
   if (field) field.focus();
 }
 
+function resolvedInputLabel(name, state) {
+  // Display the evaluated subscript at the moment INPUT is reached.
+  // Preserve the original target for assignment and type checking.
+  return name.replace(/\[([^\[\]]+)\]/g, (full, content) => {
+    try {
+      const indices = splitTopLevel(content).map(expr => {
+        const value = evaluateExpression(expr, state.vars);
+        if (!Number.isInteger(value)) return null;
+        return String(value);
+      });
+      return indices.some(value => value === null) ? full : `[${indices.join(',')}]`;
+    } catch (_) { return full; }
+  });
+}
+
 function renderInlineInput() {
   if (!interpreterState?.pendingInput) return '';
   const { name } = interpreterState.pendingInput;
+  const displayName = resolvedInputLabel(name, interpreterState);
   const baseName = name.match(/^[A-Za-z_]\w*/)?.[0] || name;
   const baseValue = interpreterState.vars[Object.keys(interpreterState.vars).find(k => k.toUpperCase() === baseName.toUpperCase()) || baseName];
   const type = baseValue?.__array && name.includes('[') ? baseValue.elementType : (interpreterState.types[baseName] || 'STRING');
   return `<form id="inlineInputForm" class="inline-input-form" autocomplete="off">
-    <label for="inlineProgramInput">Enter value for ${escapeHtml(name)} (${escapeHtml(type.toUpperCase())}):</label>
-    <input id="inlineProgramInput" name="value" type="text" aria-label="Value for ${escapeHtml(name)}" required spellcheck="false" />
+    <label for="inlineProgramInput">Enter value for ${escapeHtml(displayName)} (${escapeHtml(type.toUpperCase())}):</label>
+    <input id="inlineProgramInput" name="value" type="text" aria-label="Value for ${escapeHtml(displayName)}" required spellcheck="false" />
     <button type="submit">Submit</button>
     <div id="inlineInputError" class="inline-input-error" role="alert" hidden></div>
   </form>`;
@@ -1058,7 +1133,7 @@ function acceptProgramInput(rawValue) {
   }
   if(name.includes('[')||name.includes('.'))setPath9618(interpreterState,name,value);else interpreterState.vars[name] = validateType(type, value, name);
   if (!interpreterState.inputHistory) interpreterState.inputHistory = [];
-  interpreterState.inputHistory.push({name, value: rawValue, outputIndex: interpreterState.output.length});
+  interpreterState.inputHistory.push({name: resolvedInputLabel(name, interpreterState), value: rawValue, outputIndex: interpreterState.output.length});
   interpreterState.pc += 1;
   interpreterState.pendingInput = null;
 }
@@ -1290,7 +1365,7 @@ function semanticPreflight9618(source) {
     }
     if(stack.length)fail(i,'SyntaxError','Unclosed expression delimiter');
     const significant=tokens.filter(x=>x.type!=='eof');
-    if(significant.length&&['+','-','*','/','DIV','MOD','AND','OR','&','=','<','>','<=','>=','<>'].includes(significant.at(-1).value))fail(i,'SyntaxError','Incomplete expression');
+    if(significant.length&&significant.at(-1).type==='op'&&['+','-','*','/','=','<','>','<=','>=','<>'].includes(significant.at(-1).value) || significant.length&&significant.at(-1).type==='word'&&['DIV','MOD','AND','OR'].includes(significant.at(-1).value))fail(i,'SyntaxError','Incomplete expression');
   }
   for(let i=0;i<lines.length;i++){
     const t=lines[i].trim();if(inClass[i]||!t||t.startsWith('//'))continue;

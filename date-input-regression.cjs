@@ -1,0 +1,21 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const html=fs.readFileSync(__dirname+'/index.html','utf8');
+const js=html.match(/<script>([\s\S]*?)<\/script>/)[1];
+vm.runInThisContext(js.slice(js.indexOf('function splitTopLevel('),js.indexOf('function continueProgram() {')));
+for(const date of ['23/06/1912','29/02/2024','01/01/0001','31/12/2000']) assert.equal(validateType('DATE',date,'established'),date);
+for(const date of ['31/02/1912','29/02/2023','2024-06-23','23/6/1912','00/01/1912','31/04/2024','']) assert.throws(()=>validateType('DATE',date,'established'));
+const program='DECLARE established : DATE\nOUTPUT "When was the city established?"\nINPUT established\nOUTPUT established';
+const s=createState(program);for(let n=0;n<20&&!s.pendingInput&&!s.done;n++)executeInstruction(s);
+assert(s.pendingInput,'INPUT must pause');
+const inputFn=js.slice(js.indexOf('function acceptProgramInput(rawValue) {'),js.indexOf('function renderState() {'));
+// Input handler references the browser's interpreterState, so inject the same state in this test.
+global.interpreterState=s;vm.runInThisContext(js.slice(js.indexOf('function resolvedInputLabel('),js.indexOf('function renderInlineInput() {')));vm.runInThisContext(inputFn);
+assert.throws(()=>acceptProgramInput('31/02/1912'));
+assert(s.pendingInput,'Invalid input must preserve prompt');
+acceptProgramInput('23/06/1912');
+assert.equal(s.vars.established,'23/06/1912');
+assert.equal(s.pendingInput,null);
+for(let n=0;n<20&&!s.done;n++)executeInstruction(s);
+assert(!s.error,s.error);
+assert(s.output.join('\n').includes('23/06/1912'));
+console.log('DATE input regression PASS');
